@@ -8,26 +8,29 @@ module Tree (
   applyNTimes
 ) where
 
+ -- A data structure meant to represent all possible choices from a event
  data Tree a = Leaf a | Branch a [Tree a]
     deriving Show
 
+ instance Functor Tree where
+  fmap f (Branch x y) = Branch (f x) (map (fmap f) y)
+  fmap f (Leaf x) = Leaf (f x)
+
+ --  Given a path to take retrieves subtree's
  getSubTree :: Tree a -> [Int] -> Maybe (Tree a)
  getSubTree tr [] = Just tr
  getSubTree (Leaf _) xs | not $ null xs = Nothing
  getSubTree (Branch _ subTr) (x:_) | x > length subTr = Nothing
  getSubTree (Branch _ subTr) (x:xs) = getSubTree (subTr !! x) xs
 
+ -- Given a tree returns top value
  getVal :: Tree a -> a
  getVal (Leaf a) = a
  getVal (Branch a _) = a
 
-
+ -- Combines getVal and getSubTree to return a specific value
  getValAt :: Tree a -> [Int] -> Maybe a
  getValAt tr xs = getSubTree tr xs >>= (Just . getVal)
-
- instance Functor Tree where
-   fmap f (Branch x y) = Branch (f x) (map (fmap f) y)
-   fmap f (Leaf x) = Leaf (f x)
 
  maxa :: ([a] -> a,[a] -> a) -> Tree a -> a
  maxa _ (Leaf a) = a
