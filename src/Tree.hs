@@ -8,6 +8,16 @@ module Tree (
   applyNTimes
 ) where
 
+{-
+  Provides the data structures and funnctions meant to deal with tree's
+
+  Tasks:
+  - Completing alphaBetaHelper
+  - Extending Tree typeclasses, to traversable
+-}
+
+
+
  -- A data structure meant to represent all possible choices from a event
  data Tree a = Leaf a | Branch a [Tree a]
     deriving Show
@@ -32,11 +42,12 @@ module Tree (
  getValAt :: Tree a -> [Int] -> Maybe a
  getValAt tr xs = getSubTree tr xs >>= (Just . getVal)
 
+ -- Naive minimax implementation
  maxa :: ([a] -> a,[a] -> a) -> Tree a -> a
  maxa _ (Leaf a) = a
  maxa (f,g) (Branch _ y) = f (map (maxa (g,f)) y)
 
-
+ -- A hopefully better implementation
  alphaBetaHelper :: Ord a => Int -> (b -> [b]) -> (b -> a) -> Tree b -> (a -> Bool,a -> Bool) -> a
  alphaBetaHelper 0 _ val (Leaf b) _ = val b
  alphaBetaHelper i gen val (Leaf b) (isUsed,notUsed) = undefined
@@ -44,6 +55,7 @@ module Tree (
       listIter [] val (isUsed,notUsed) = val
       listIter (x:xs) val (isUsed,notUsed) | isUsed = undefined
 
+ -- Gives the index of the greatest element
  findMax :: Ord a => [a] -> Maybe Int
  findMax [] = Nothing
  findMax (y:ys) = Just $ helper (0,y) 1 ys
@@ -53,14 +65,20 @@ module Tree (
     helper (_,x) j (z:zs) | z > x = helper (j,z) (j+1) zs
     helper _ _ _ = 0
 
+
+-- Gives index of branch of greatest value
  maxmin :: Ord a => Tree a -> Maybe Int
  maxmin (Leaf _) = Nothing
  maxmin (Branch _ y) = findMax (map (maxa (maximum,minimum)) y)
 
+
+-- A selective fmap that generates new branchs of the Tree
  applyAtEnds :: (a -> b) -> (a -> [b]) -> Tree a -> Tree b
  applyAtEnds g f (Branch val subTr) = Branch (g val) (map (applyAtEnds g f) subTr)
  applyAtEnds g f (Leaf val) = Branch (g val) (map Leaf (f val))
 
+
+-- swaps two leaf generating functions
  applyNTimes :: (a -> a) -> (a -> [a],a -> [a]) -> Tree a -> Integer -> Tree a
  applyNTimes g _ tr n | n < 0 = fmap g tr
  applyNTimes g (f,h) tr n =  applyNTimes g (h,f) (applyAtEnds g f tr) (n-1)
