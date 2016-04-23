@@ -37,6 +37,13 @@ module Tree (
  maxa (f,g) (Branch _ y) = f (map (maxa (g,f)) y)
 
 
+ alphaBetaHelper :: Ord a => Int -> (b -> [b]) -> (b -> a) -> Tree b -> (a -> Bool,a -> Bool) -> a
+ alphaBetaHelper 0 _ val (Leaf b) _ = val b
+ alphaBetaHelper i gen val (Leaf b) (isUsed,notUsed) = undefined
+    where
+      listIter [] val (isUsed,notUsed) = val
+      listIter (x:xs) val (isUsed,notUsed) | isUsed = undefined
+
  findMax :: Ord a => [a] -> Maybe Int
  findMax [] = Nothing
  findMax (y:ys) = Just $ helper (0,y) 1 ys
