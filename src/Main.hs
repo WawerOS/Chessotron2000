@@ -8,7 +8,7 @@ import Control.Applicative()
 {-
   The UI for my chess program
   Tasks:
-  - Add more to player
+  - Allow user to play against another human or to play against the AI
 -}
 
 -- generates a full tree of moves
