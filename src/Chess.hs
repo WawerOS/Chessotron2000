@@ -29,6 +29,14 @@ getAllOurMoves
  import Data.Char
  import Text.Printf
 
+{-
+Provides data structures and functions
+to model a  chess boards
+
+Tasks:
+- Reorganize functions
+-}
+
  -- Some useful definitions
  newLine :: String
  newLine = printf "\n"
