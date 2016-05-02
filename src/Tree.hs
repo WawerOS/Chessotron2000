@@ -47,14 +47,6 @@ module Tree (
  maxa _ (Leaf a) = a
  maxa (f,g) (Branch _ y) = f (map (maxa (g,f)) y)
 
- -- A hopefully better implementation
- alphaBetaHelper :: Ord a => Int -> (b -> [b]) -> (b -> a) -> Tree b -> (a -> Bool,a -> Bool) -> a
- alphaBetaHelper 0 _ val (Leaf b) _ = val b
- alphaBetaHelper i gen val (Leaf b) (isUsed,notUsed) = undefined
-    where
-      listIter [] val (isUsed,notUsed) = val
-      listIter (x:xs) val (isUsed,notUsed) | isUsed = undefined
-
  -- Gives the index of the greatest element
  findMax :: Ord a => [a] -> Maybe Int
  findMax [] = Nothing
