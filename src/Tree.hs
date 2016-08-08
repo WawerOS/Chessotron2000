@@ -16,8 +16,6 @@ module Tree (
   - Extending Tree typeclasses, to traversable
 -}
 
-
-
  -- A data structure meant to represent all possible choices from a event
  data Tree a = Leaf a | Branch a [Tree a]
     deriving Show
@@ -25,6 +23,13 @@ module Tree (
  instance Functor Tree where
   fmap f (Branch x y) = Branch (f x) (map (fmap f) y)
   fmap f (Leaf x) = Leaf (f x)
+
+-- A pair of infinite Tree
+ zeroTree :: Tree Integer
+ zeroTree = Branch 0 [oneTree,zeroTree]
+
+ oneTree :: Tree Integer
+ oneTree = Branch 1 [oneTree,zeroTree]
 
  --  Given a path to take retrieves subtree's
  getSubTree :: Tree a -> [Int] -> Maybe (Tree a)
