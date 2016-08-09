@@ -3,6 +3,7 @@ module Tree (
   getVal,
   getSubTree,
   getValAt,
+  chooser,
   maxmin,
   applyAtEnds,
   applyNTimes
@@ -47,10 +48,6 @@ module Tree (
  getValAt :: Tree a -> [Int] -> Maybe a
  getValAt tr xs = getSubTree tr xs >>= (Just . getVal)
 
- -- Naive minimax implementation
- maxa :: ([a] -> a,[a] -> a) -> Tree a -> a
- maxa _ (Leaf a) = a
- maxa (f,g) (Branch _ y) = f (map (maxa (g,f)) y)
 
  -- Gives the index of the greatest element
  findMax :: Ord a => [a] -> Maybe Int
@@ -62,14 +59,27 @@ module Tree (
     helper (_,x) j (z:zs) | z > x = helper (j,z) (j+1) zs
     helper _ _ _ = 0
 
+ chooser :: Ord b => (Tree a -> b) -> Tree a -> Maybe Int
+ chooser f (Branch _ y) = findMax $ map f y
+ chooser _ _ = Nothing
+
+ alphaBeta :: Ord b => Tree a -> (a -> b) -> Maybe Int
+ alphaBeta = undefined
+
+
+
+ -- Naive minimax implementation
+ maxa :: ([a] -> a,[a] -> a) -> Tree a -> a
+ maxa _ (Leaf a) = a
+ maxa (f,g) (Branch _ y) = f (map (maxa (g,f)) y)
 
 -- Gives index of branch of greatest value
- maxmin :: Ord a => Tree a -> Maybe Int
- maxmin (Leaf _) = Nothing
- maxmin (Branch _ y) = findMax (map (maxa (maximum,minimum)) y)
+ maxmin :: Ord a => Tree a -> a
+ maxmin (Leaf a) = a
+ maxmin t = maxa (maximum,minimum) t
 
 
--- A selective fmap that generates new branchs of the Tree
+-- A selective fmap
  applyAtEnds :: (a -> b) -> (a -> [b]) -> Tree a -> Tree b
  applyAtEnds g f (Branch val subTr) = Branch (g val) (map (applyAtEnds g f) subTr)
  applyAtEnds g f (Leaf val) = Branch (g val) (map Leaf (f val))
