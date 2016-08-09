@@ -21,12 +21,16 @@ moveTree clr = applyNTimes id (getAllOurMoves clr . snd,getAllOurMoves clr' . sn
 firstNode :: Tree (Move,Board)
 firstNode = Leaf (NoMove,newBoard)
 
+-- How far the rabbit hole goes
+moveTreeDepth :: Integer
+moveTreeDepth = 3
+
 -- Actual AI
 chessAI :: Color ->  Tree (Move,Board) -> (Maybe Move,Maybe (Tree (Move,Board)) )
-chessAI c b = (\n -> (n >>= (Just . fst <=< getValAt tr . (:[])), n >>= getSubTree tr . (:[]) )) ind
+chessAI c b = ((Just . fst <=< getValAt tr . (:[])) =<< ind , getSubTree tr . (:[]) =<< ind)
   where
-    ind = maxmin $ applyAtEnds (const 0) ((:[]) . strategyVal c . snd) tr
-    tr = moveTree c b 3
+    ind = chooser maxmin $ applyAtEnds (const 0) ((:[]) . strategyVal c . snd) tr
+    tr = moveTree c b moveTreeDepth
 
 -- Converts a tuple of Maybe's to a Maybe tuple
 tupleMaybe :: (Maybe a,Maybe b) -> Maybe (a,b)
