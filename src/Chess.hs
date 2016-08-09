@@ -176,30 +176,38 @@ Tasks:
  isOurSide :: Color -> Piece -> Bool
  isOurSide clr (Piece clr' _) = clr == clr'
 
+ -- Procures all possible moves for a single side
  getAllOurMoves :: Color -> Board -> [(Move,Board)]
  getAllOurMoves c b = filter ((\(Move z _) -> isOurSide c (getPiece b z)) . fst) $ getAllMoves b
 
+ -- Is it a piece?
  isPiece :: Board  -> (Integer,Integer) -> Bool
  isPiece b = (/= EmptyColor) . getColor . getPiece b
 
+ -- All possible changes in position for any piece
  deltas :: [(Integer,Integer)]
  deltas = concatMap mult $ [(0,dy)| dy <- [1..7]] ++ [(dx,0)| dx <- [1..7]] ++ [(d,d) | d <- [1..7]] ++ [(1,2),(2,1)]
 
- moves :: Board -> (Integer,Integer) -> [(Integer,Integer)]
- moves b z = filter (checkMove b z) (filter isValidCoord (map (adder z) deltas))
-
- adder :: (Integer,Integer) -> (Integer,Integer) -> (Integer,Integer)
- adder (x',y') (x'',y'') = (x'+x'',y'+y'')
-
+ -- Properly applies the concept of negatives to vectors
  mult :: (Integer,Integer) -> [(Integer,Integer)]
  mult (0,y') = [(0,y'),(0,-y')]
  mult (x',0) = [(-x',0),(x',0)]
  mult (x',y') = [(-x',y'),(x',-y'),(-x',-y'),(x',y')]
 
+ -- All moves for a particular piece
+ moves :: Board -> (Integer,Integer) -> [(Integer,Integer)]
+ moves b z = filter (checkMove b z) (filter isValidCoord (map (adder z) deltas))
+
+ -- Adding, but for vectors
+ adder :: (Integer,Integer) -> (Integer,Integer) -> (Integer,Integer)
+ adder (x',y') (x'',y'') = (x'+x'',y'+y'')
+
+ -- Check if a side is in checkmate
  checkMate :: Color -> Board -> Bool
  checkMate EmptyColor _ = False
  checkMate c b = check c b && all (check c) (map snd $ getAllMoves b)
 
+ -- Checks if a side is in check
  check :: Color -> Board -> Bool
  check EmptyColor _ = False
  check c b = any (attackable b) (filterBoard filterKings b)
@@ -207,7 +215,7 @@ Tasks:
      ourKing = Piece c King
      filterKings b' z = getPiece b' z == ourKing
 
-
+ -- Finds all pieces on a board that have a certain, ... something
  filterBoard :: (Board -> (Integer,Integer) -> Bool) -> Board -> [(Integer,Integer)]
  filterBoard f b = helper (0,0) []
   where
@@ -216,6 +224,7 @@ Tasks:
     helper (x,y) xs | y == 7 = if f b (x,y) then helper (x+1,0) ((x,y):xs) else helper (x+1,0) xs
     helper (x,y) xs = if f b (x,y) then helper (x,y+1) ((x,y):xs) else helper (x,y+1) xs
 
+ -- Tells you if a move is blocked by a piece
  blckedAt :: Board -> (Integer,Integer) -> (Integer,Integer) -> Maybe (Color,(Integer,Integer))
  blckedAt b z z'
   | getPiece b z == emptyPiece = Nothing
@@ -224,6 +233,7 @@ Tasks:
     where
       clr' = getColor (getPiece b z')
 
+ -- Gets the first piece on the path made by two places
  getFirstOnPath :: Board -> (Integer,Integer) -> (Integer,Integer) -> Maybe (Integer,Integer)
  getFirstOnPath b z@(x,y) z'@(x',y') = helper (x+incX,y+incY)
     where
@@ -236,12 +246,14 @@ Tasks:
       helper (coordX,coordY) = if getPiece b (coordX, coordY) /= emptyPiece
                                  then Just (coordX,coordY) else helper (coordX+incX,coordY+incY)
 
+ -- Checks if the path is blocked accounting for taking pieces
  sameOrNot :: Color -> (Integer,Integer) -> Maybe (Color,(Integer,Integer)) -> Bool
  sameOrNot _ _ Nothing = False
  sameOrNot clr _ (Just (clr',_)) | clr == clr' = True
  sameOrNot clr z (Just (clr',z')) | clr /= clr' = z /= z'
  sameOrNot _ _ _ = True
 
+ -- Checks if a move is allowed, en'pasant and castling not implemented
  checkMove :: Board -> (Integer,Integer) -> (Integer,Integer) -> Bool
  checkMove b z@(x,y) z'@(x',y')
   | not (isValidCoord z && isValidCoord z') = False
@@ -268,23 +280,27 @@ Tasks:
 
  checkMove _ _ _ = False
 
+ -- Tells you which direction a pawn moves based on color
  pawnDir :: Num a => Color -> a
  pawnDir EmptyColor = 0
  pawnDir White = 1
  pawnDir Black = -1
 
-
+ -- Allows for easier chaining of moves with Maybe
  checkedMove :: Board -> (Integer,Integer) -> (Integer,Integer) -> Maybe Board
  checkedMove b z z' | checkMove b z z' = Just $ movePiece b z z'
  checkedMove b z z' | not (checkMove b z z') = Nothing
  checkedMove _ _ _ = Nothing
 
+ -- Convience function
  flip3 :: (a -> b -> c -> d) -> (b -> c -> a -> d)
- flip3 f = (\ b c a -> f a b c)
+ flip3 f b c a = f a b c
 
+ -- Allows easier chaining of moves
  easyMove :: (Integer,Integer) -> (Integer,Integer) -> Board -> Maybe Board
  easyMove = flip3 checkedMove
 
+ -- Assigns a strategic value to each piece
  pieceVal :: Num a => PieceType -> a
  pieceVal EmptyType = 0
  pieceVal King = 15
@@ -294,22 +310,26 @@ Tasks:
  pieceVal  Rook = 4
  pieceVal Queen = 9
 
+ -- Convience function for comparing colors and getting coeffiencts
  colorSign :: Num a => Color -> Color -> a
  colorSign c c' | c == c' = 1
  colorSign c c' | c /= c' = -1
  colorSign _ _ = 0
 
+ -- Assingns a value to a piece based on Color, places to move, and pieces at those places
  posVal :: Board -> Color -> (Integer,Integer) -> Double
- posVal b c z = (pieceVal pceType) * (colorSign c clr) * sum (map valFunc (moves b z))
+ posVal b c z = colorSign c clr * sum (map valFunc (moves b z))
    where
      clr = getColor (getPiece b z)
      pceType = getPieceType (getPiece b z)
      valFunc =  sameAZero clr . getPiece b
 
+ -- Its of no value if you can move into your own places
  sameAZero :: Color -> Piece -> Double
- sameAZero clr (Piece clr' _) | clr' == clr = 0
+ sameAZero clr piece | isOurSide clr piece = 0
  sameAZero _ p = pieceVal (getPieceType p)
 
+ -- Computes the strategic value of a board
  strategyVal :: Color -> Board -> Double
  strategyVal c b | checkMate c b = -1
  strategyVal c b | checkMate (opposite c) b = 1
