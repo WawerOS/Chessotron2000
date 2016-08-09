@@ -86,6 +86,8 @@ Tasks:
  getColor :: Piece -> Color
  getColor (Piece c _) = c
 
+ type Pos = (Integer,Integer)
+
  -- A representation of a Chess Board indexed on (0,0) to (7,7)
  newtype Board = Board (Array (Integer,Integer) Piece)
   deriving Eq
@@ -98,7 +100,7 @@ Tasks:
  printBoard a x = "|" ++ concat [ show (a ! (x,y)) ++ "|" | y <- [0..7]] ++ newLine ++ interrupt ++ printBoard a (x-1)
 
  -- A holder for two tuples makes things easier to interface with
- data Move = Move (Integer,Integer) (Integer,Integer) | NoMove
+ data Move = Move Pos Pos | NoMove
   deriving Eq
 
  instance Show Move where
@@ -119,17 +121,17 @@ Tasks:
  pieceNum _ = EmptyType
 
  -- linePawns produce a line of pawns for a specific color for a new board
- linePawns :: Color -> [((Integer,Integer),Piece)]
+ linePawns :: Color -> [(Pos,Piece)]
  linePawns Black = map (\y -> ((6,y),Piece Black Pawn)) [0..7]
  linePawns White = map (\y -> ((1,y),Piece White Pawn)) [0..7]
 
  -- lineBack produces the back line of the board with correct associations
- lineBack :: Color -> [((Integer,Integer),Piece)]
+ lineBack :: Color -> [(Pos,Piece)]
  lineBack Black = map (\y -> ((7,y),Piece Black (pieceNum y))) [0..7]
  lineBack White = map (\y -> ((0,y),Piece White (pieceNum y))) [0..7]
 
  -- Produces a line of empty spaces
- emptyLine :: Integer -> [((Integer,Integer),Piece)]
+ emptyLine :: Integer -> [(Pos,Piece)]
  emptyLine x = map (\y -> ((x,y),emptyPiece)) [0..7]
 
  -- A fresh board
@@ -137,11 +139,11 @@ Tasks:
  newBoard = Board $ array ((0,0),(7,7)) $ concat ([linePawns,lineBack] <*> [Black,White]) ++ concatMap emptyLine [2..5]
 
  -- get a piece from the board
- getPiece :: Board -> (Integer,Integer) -> Piece
+ getPiece :: Board -> Pos -> Piece
  getPiece (Board a) z = a ! z
 
  -- Moves a piece from z to z' replaceing anything there
- movePiece :: Board -> (Integer,Integer) -> (Integer,Integer) -> Board
+ movePiece :: Board -> Pos -> Pos -> Board
  movePiece (Board a) z z' = Board ( a // [(z,emptyPiece),(z',a ! z)])
 
  -- implements Move interface
@@ -150,15 +152,15 @@ Tasks:
  makeMove NoMove b = b
 
  -- takes a tuple and  checks if it is a valid coordinate
- isValidCoord :: (Integer,Integer) -> Bool
+ isValidCoord :: Pos -> Bool
  isValidCoord (x,y) = all (\a -> (a <= 7) && (a >= 0)) [x,y]
 
  -- given a board and position returns all possible move to there
- whatCanGoThere :: Board -> (Integer,Integer) -> [(Integer,Integer)]
+ whatCanGoThere :: Board -> Pos -> [Pos]
  whatCanGoThere b z = filter (\z' -> checkMove b z' z) (filter isValidCoord (map (adder z) deltas))
 
  -- Tells you wheather a position can be attacked
- attackable :: Board -> (Integer,Integer) -> Bool
+ attackable :: Board -> Pos -> Bool
  attackable b z = any (\z' -> clrGetter z' == opposite clr) (whatCanGoThere b z)
    where
     clr = getColor (getPiece b z)
@@ -181,25 +183,25 @@ Tasks:
  getAllOurMoves c b = filter ((\(Move z _) -> isOurSide c (getPiece b z)) . fst) $ getAllMoves b
 
  -- Is it a piece?
- isPiece :: Board  -> (Integer,Integer) -> Bool
+ isPiece :: Board  -> Pos -> Bool
  isPiece b = (/= EmptyColor) . getColor . getPiece b
 
  -- All possible changes in position for any piece
- deltas :: [(Integer,Integer)]
+ deltas :: [Pos]
  deltas = concatMap mult $ [(0,dy)| dy <- [1..7]] ++ [(dx,0)| dx <- [1..7]] ++ [(d,d) | d <- [1..7]] ++ [(1,2),(2,1)]
 
  -- Properly applies the concept of negatives to vectors
- mult :: (Integer,Integer) -> [(Integer,Integer)]
+ mult :: Pos -> [Pos]
  mult (0,y') = [(0,y'),(0,-y')]
  mult (x',0) = [(-x',0),(x',0)]
  mult (x',y') = [(-x',y'),(x',-y'),(-x',-y'),(x',y')]
 
  -- All moves for a particular piece
- moves :: Board -> (Integer,Integer) -> [(Integer,Integer)]
+ moves :: Board -> Pos -> [Pos]
  moves b z = filter (checkMove b z) (filter isValidCoord (map (adder z) deltas))
 
  -- Adding, but for vectors
- adder :: (Integer,Integer) -> (Integer,Integer) -> (Integer,Integer)
+ adder :: Pos -> Pos -> Pos
  adder (x',y') (x'',y'') = (x'+x'',y'+y'')
 
  -- Check if a side is in checkmate
@@ -216,16 +218,16 @@ Tasks:
      filterKings b' z = getPiece b' z == ourKing
 
  -- Finds all pieces on a board that have a certain, ... something
- filterBoard :: (Board -> (Integer,Integer) -> Bool) -> Board -> [(Integer,Integer)]
+ filterBoard :: (Board -> Pos -> Bool) -> Board -> [Pos]
  filterBoard f b = helper (0,0) []
   where
-    helper :: (Integer,Integer) -> [(Integer,Integer)] -> [(Integer,Integer)]
+    helper :: Pos -> [Pos] -> [Pos]
     helper (x,y) xs | (x == 7) && (y == 7) = if f b (x,y) then (x,y):xs else xs
     helper (x,y) xs | y == 7 = if f b (x,y) then helper (x+1,0) ((x,y):xs) else helper (x+1,0) xs
     helper (x,y) xs = if f b (x,y) then helper (x,y+1) ((x,y):xs) else helper (x,y+1) xs
 
  -- Tells you if a move is blocked by a piece
- blckedAt :: Board -> (Integer,Integer) -> (Integer,Integer) -> Maybe (Color,(Integer,Integer))
+ blckedAt :: Board -> Pos -> Pos -> Maybe (Color,Pos)
  blckedAt b z z'
   | getPiece b z == emptyPiece = Nothing
   | getPieceType (getPiece b z) == Knight = if EmptyColor /= clr' then Just (clr',z') else Nothing
@@ -234,7 +236,7 @@ Tasks:
       clr' = getColor (getPiece b z')
 
  -- Gets the first piece on the path made by two places
- getFirstOnPath :: Board -> (Integer,Integer) -> (Integer,Integer) -> Maybe (Integer,Integer)
+ getFirstOnPath :: Board -> Pos -> Pos -> Maybe Pos
  getFirstOnPath b z@(x,y) z'@(x',y') = helper (x+incX,y+incY)
     where
       incX = signum dX
@@ -247,14 +249,14 @@ Tasks:
                                  then Just (coordX,coordY) else helper (coordX+incX,coordY+incY)
 
  -- Checks if the path is blocked accounting for taking pieces
- sameOrNot :: Color -> (Integer,Integer) -> Maybe (Color,(Integer,Integer)) -> Bool
+ sameOrNot :: Color -> Pos -> Maybe (Color,Pos) -> Bool
  sameOrNot _ _ Nothing = False
  sameOrNot clr _ (Just (clr',_)) | clr == clr' = True
  sameOrNot clr z (Just (clr',z')) | clr /= clr' = z /= z'
  sameOrNot _ _ _ = True
 
  -- Checks if a move is allowed, en'pasant and castling not implemented
- checkMove :: Board -> (Integer,Integer) -> (Integer,Integer) -> Bool
+ checkMove :: Board -> Pos -> Pos -> Bool
  checkMove b z@(x,y) z'@(x',y')
   | not (isValidCoord z && isValidCoord z') = False
   | getPiece b z == emptyPiece = False
@@ -287,7 +289,7 @@ Tasks:
  pawnDir Black = -1
 
  -- Allows for easier chaining of moves with Maybe
- checkedMove :: Board -> (Integer,Integer) -> (Integer,Integer) -> Maybe Board
+ checkedMove :: Board -> Pos -> Pos -> Maybe Board
  checkedMove b z z' | checkMove b z z' = Just $ movePiece b z z'
  checkedMove b z z' | not (checkMove b z z') = Nothing
  checkedMove _ _ _ = Nothing
@@ -297,7 +299,7 @@ Tasks:
  flip3 f b c a = f a b c
 
  -- Allows easier chaining of moves
- easyMove :: (Integer,Integer) -> (Integer,Integer) -> Board -> Maybe Board
+ easyMove :: Pos -> Pos -> Board -> Maybe Board
  easyMove = flip3 checkedMove
 
  -- Assigns a strategic value to each piece
@@ -317,7 +319,7 @@ Tasks:
  colorSign _ _ = 0
 
  -- Assingns a value to a piece based on Color, places to move, and pieces at those places
- posVal :: Board -> Color -> (Integer,Integer) -> Double
+ posVal :: Board -> Color -> Pos -> Double
  posVal b c z = colorSign c clr * sum (map valFunc (moves b z))
    where
      clr = getColor (getPiece b z)
