@@ -23,13 +23,13 @@ firstNode = Leaf (NoMove,newBoard)
 
 -- How far the rabbit hole goes
 moveTreeDepth :: Integer
-moveTreeDepth = 3
+moveTreeDepth = 2
 
 -- Actual AI
 chessAI :: Color ->  Tree (Move,Board) -> (Maybe Move,Maybe (Tree (Move,Board)) )
 chessAI c b = ((Just . fst <=< getValAt tr . (:[])) =<< ind , getSubTree tr . (:[]) =<< ind)
   where
-    ind = chooser maxmin $ applyAtEnds (const 0) ((:[]) . strategyVal c . snd) tr
+    ind = chooser (alphaBeta (-2) 2 True) $ applyAtEnds (const 0) ((:[]) . strategyVal c . snd) tr
     tr = moveTree c b moveTreeDepth
 
 -- Converts a tuple of Maybe's to a Maybe tuple
