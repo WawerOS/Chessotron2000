@@ -5,6 +5,7 @@ module Tree (
   getValAt,
   chooser,
   maxmin,
+  alphaBeta,
   applyAtEnds,
   applyNTimes
 ) where
@@ -13,7 +14,7 @@ module Tree (
   Provides the data structures and funnctions meant to deal with tree's
 
   Tasks:
-  - Completing alphaBetaHelper
+  - Completing alphaBeta
   - Extending Tree typeclasses, to traversable
 -}
 
@@ -63,8 +64,31 @@ module Tree (
  chooser f (Branch _ y) = findMax $ map f y
  chooser _ _ = Nothing
 
- alphaBeta :: Ord b => Tree a -> (a -> b) -> Maybe Int
- alphaBeta = undefined
+ alphaBeta :: Ord a => a -> a ->  Bool -> Tree a -> a
+ alphaBeta  _ _ _ (Leaf a) = a
+ alphaBeta  a b True (Branch _ ls) = maxLeq a b ls
+ alphaBeta  a b False (Branch _ ls) = maxLeq a b ls
+
+ minLeq :: Ord a => a -> a -> [Tree a] -> a
+ minLeq a _ [] = a
+ minLeq a b _ | a >= b = a
+ minLeq a b (x:xs) | val x < b = maxLeq a (val x) xs
+  where
+   val = alphaBeta a b True
+ minLeq a b (x:xs) | val x >= b = maxLeq a b xs
+  where
+    val = alphaBeta a b True
+
+ maxLeq :: Ord a => a -> a -> [Tree a] -> a
+ maxLeq a _ [] = a
+ maxLeq a b _ | a >= b = a
+ maxLeq a b (x:xs) | val x > a = maxLeq (val x) b xs
+  where
+   val = alphaBeta a b False
+ maxLeq a b (x:xs) | val x <= a = maxLeq a b xs
+  where
+    val = alphaBeta a b False
+
 
 
 
@@ -87,5 +111,5 @@ module Tree (
 
 -- swaps two leaf generating functions
  applyNTimes :: (a -> a) -> (a -> [a],a -> [a]) -> Tree a -> Integer -> Tree a
- applyNTimes g _ tr n | n < 0 = fmap g tr
+ applyNTimes g _ tr n | n == 0 = fmap g tr
  applyNTimes g (f,h) tr n =  applyNTimes g (h,f) (applyAtEnds g f tr) (n-1)
