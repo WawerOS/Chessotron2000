@@ -11,6 +11,7 @@ Color(White,Black),
 --  Piece is used to represent a combined pieceType and Color
 Piece(),
 Board(),
+Pos,
 Move(Move,NoMove),
 newBoard,
 easyMove,
