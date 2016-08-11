@@ -9,6 +9,7 @@ module Tree (
   applyAtEnds,
   applyNTimes
 ) where
+ import Data.Monoid
 
 {-
   Provides the data structures and funnctions meant to deal with tree's
@@ -25,6 +26,10 @@ module Tree (
  instance Functor Tree where
   fmap f (Branch x y) = Branch (f x) (map (fmap f) y)
   fmap f (Leaf x) = Leaf (f x)
+
+ instance Foldable Tree where
+  foldMap f (Leaf a) = f a
+  foldMap f (Branch a br) = foldMap (foldMap f) br <> f a
 
 -- A pair of infinite Tree
  zeroTree :: Tree Integer
