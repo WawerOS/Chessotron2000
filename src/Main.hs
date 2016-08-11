@@ -58,12 +58,12 @@ flushOut :: IO ()
 flushOut = hFlush stdout
 
 -- Get's a single coordinate
-getUserCoord :: IO (Integer,Integer)
+getUserCoord :: IO Pos
 getUserCoord = do
   putStr ">>"
   flushOut
   line <- getLine
-  let maybeCoord = maybeRead line :: Maybe (Integer,Integer)
+  let maybeCoord = maybeRead line :: Maybe Pos
   let coord = maybeOrDefault maybeCoord (8,8)
   if isValidCoord coord
   then return coord
