@@ -116,6 +116,7 @@ Tasks:
  mapMove f (Move z z') = (f z,f z')
  mapMove f (EnPassant z z') = (f z,f z')
  mapMove f (Castle z z') = (f z,f z')
+ mapMove f NoMove = (f (0,0),f (0,0))
 
  -- A constant for a empty space on the Chess board
  emptyPiece :: Piece
@@ -159,12 +160,12 @@ Tasks:
  -- implements Move interface
  makeMove :: Move -> Board -> Board
  makeMove (Move z z') b = movePiece b z z'
- makeMove (Castle z z') b@(Board a) = Board ( a // [(place,p),(place',p')])
+ makeMove (Castle z z'@(x,y)) b@(Board a) = Board ( a // [(place,p),(place',p')])
    where
      p = getPiece b z
      p' = getPiece b z'
-     place = if z' == (0,0) then (0,2) else (0,6)
-     place' = if z' == (0,0) then (0,3) else (0,5)
+     place = if x == y then (x,2) else (x,6)
+     place' = if x == y then (x,3) else (x,5)
  makeMove (EnPassant z z') b = movePiece (movePiece b z z') z' (adder z' (dir,0))
   where
     clr = getColor $ getPiece b z
@@ -227,7 +228,8 @@ Tasks:
  -- Check if a side is in checkmate
  checkMate :: Color -> Board -> Bool
  checkMate EmptyColor _ = False
- checkMate c b = check c b && all (check c) (map snd $ getAllMoves b)
+ checkMate c b = (check c b && all (check c) (map snd $ getAllMoves b)) ||
+                    (null $ filterBoard (\b z -> (getPiece b z == (Piece c King))) b)
 
  -- Checks if a side is in check
  check :: Color -> Board -> Bool
@@ -288,7 +290,7 @@ Tasks:
   | pieceType == Rook = oneDir
   | pieceType == Bishop = eq
   | pieceType == Pawn = ((clr' == opposite clr) && eq && (clrDir*(x'- x) == 1)) ||
-                           ((clrDir*(x' - x) == 1) && (dY == 0))
+                           ((clrDir*(x' - x) == 1) && (dY == 0) && (clr' == EmptyColor))
       where
          clrDir = pawnDir clr
          oneDir = (dX == 0) || (dY == 0)
@@ -336,7 +338,7 @@ Tasks:
  oneSidePieceScore = sum (map (pieceVal . getPieceType . getPiece newBoard) $ filterBoard isPiece newBoard)/2
 
  sumPieceScore :: Color -> Board -> Double
- sumPieceScore clr brd = ((*(-1)) . sum) $ map (pieceVal . getPieceType . getPiece newBoard) $ filterBoard (\b -> isOurSide clr' . getPiece b) newBoard
+ sumPieceScore clr brd = ((*(-1)) . sum) $ map (pieceVal . getPieceType . getPiece brd) $ filterBoard (\b -> isOurSide clr' . getPiece b) newBoard
   where
     clr' = opposite clr
  -- Convience function for comparing colors and getting coeffiencts
