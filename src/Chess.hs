@@ -13,6 +13,7 @@ Piece(),
 Board(),
 Pos,
 Move(Move,NoMove),
+mapMove,
 newBoard,
 easyMove,
 strategyVal,
@@ -29,6 +30,7 @@ getAllOurMoves
  import Data.Array
  import Data.Char
  import Text.Printf
+ import Control.Arrow
 
 {-
 Provides data structures and functions
@@ -101,12 +103,19 @@ Tasks:
  printBoard a x = "|" ++ concat [ show (a ! (x,y)) ++ "|" | y <- [0..7]] ++ newLine ++ interrupt ++ printBoard a (x-1)
 
  -- A holder for two tuples makes things easier to interface with
- data Move = Move Pos Pos | NoMove
-  deriving Eq
+ data Move = Move Pos Pos | EnPassant Pos Pos | Castle Pos Pos | NoMove
+  deriving (Read,Eq)
 
  instance Show Move where
    show (Move z z') = "Moving " ++ show z ++ " to " ++ show z'
+   show (Castle z z') = "Castling " ++ show z ++ " to " ++ show z'
+   show (EnPassant z z') = "Funky French move " ++ show z ++ " to " ++ show z'
    show NoMove = "Move? What Move?"
+
+ mapMove :: (Pos -> a) -> Move -> (a,a)
+ mapMove f (Move z z') = (f z,f z')
+ mapMove f (EnPassant z z') = (f z,f z')
+ mapMove f (Castle z z') = (f z,f z')
 
  -- A constant for a empty space on the Chess board
  emptyPiece :: Piece
@@ -150,6 +159,13 @@ Tasks:
  -- implements Move interface
  makeMove :: Move -> Board -> Board
  makeMove (Move z z') b = movePiece b z z'
+ makeMove (Castle z z') b@(Board a) = Board ( a // [(place,p),(place',p')])
+   where
+     p = getPiece b z
+     p' = getPiece b z'
+     place = if z' == (0,0) then (0,2) else (0,6)
+     place' = if z' == (0,0) then (0,3) else (0,5)
+ makeMove (EnPassant z z') b = movePiece (movePiece b z z') z' (adder z' (1,0))
  makeMove NoMove b = b
 
  -- takes a tuple and  checks if it is a valid coordinate
@@ -173,7 +189,7 @@ Tasks:
 
  -- For a particular board and piece gives all possible moves and boards
  getBoards :: Board -> (Integer, Integer) -> [(Move, Board)]
- getBoards b z = map (\z' -> (Move z z',movePiece b z z')) (moves b z)
+ getBoards b z = map (Move z &&& movePiece b z) (moves b z)
 
  -- Is a piece on our side
  isOurSide :: Color -> Piece -> Bool
@@ -306,13 +322,20 @@ Tasks:
  -- Assigns a strategic value to each piece
  pieceVal :: Num a => PieceType -> a
  pieceVal EmptyType = 0
- pieceVal King = 15
+ pieceVal King = 0
  pieceVal  Pawn = 1
  pieceVal  Knight = 3
  pieceVal  Bishop = 3
  pieceVal  Rook = 4
  pieceVal Queen = 9
 
+ oneSidePieceScore :: Double
+ oneSidePieceScore = sum (map (pieceVal . getPieceType . getPiece newBoard) $ filterBoard isPiece newBoard)/2
+
+ sumPieceScore :: Color -> Board -> Double
+ sumPieceScore clr brd = ((*(-1)) . sum) $ map (pieceVal . getPieceType . getPiece newBoard) $ filterBoard (\b -> isOurSide clr' . getPiece b) newBoard
+  where
+    clr' = opposite clr
  -- Convience function for comparing colors and getting coeffiencts
  colorSign :: Num a => Color -> Color -> a
  colorSign c c' | c == c' = 1
@@ -336,6 +359,6 @@ Tasks:
  strategyVal :: Color -> Board -> Double
  strategyVal c b | checkMate c b = -1
  strategyVal c b | checkMate (opposite c) b = 1
- strategyVal c b | check c b = -0.9
- strategyVal c b | check (opposite c) b = 0.9
- strategyVal c b = tanh $ sum $ map (posVal b c) (filterBoard isPiece b)
+ strategyVal c b | check c b = -0.9999
+ strategyVal c b | check (opposite c) b = 0.9999
+ strategyVal c b = tanh $ sumPieceScore c b
