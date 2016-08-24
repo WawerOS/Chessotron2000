@@ -23,7 +23,7 @@ firstNode = Leaf (NoMove,newBoard)
 
 -- How far the rabbit hole goes
 moveTreeDepth :: Integer
-moveTreeDepth = 2
+moveTreeDepth = 3
 
 -- Actual AI
 chessAI :: Color ->  Tree (Move,Board) -> (Maybe Move,Maybe (Tree (Move,Board)) )
@@ -65,10 +65,10 @@ getUserCoord = do
   putStr ">>"
   flushOut
   line <- getLine
-  let maybeCoord = maybeRead line :: Maybe Move
-  let coord = maybeOrDefault maybeCoord NoMove
-  if combine $ mapMove isValidCoord coord
-  then return coord
+  let maybeMv = maybeRead line :: Maybe Move
+  let mv = maybeOrDefault maybeMv NoMove
+  if (combine $ mapMove isValidCoord mv) && mv /= NoMove
+  then return mv
   else putStrLn "It's 0-7 not 1-8. It's confusing I know but what can ya do?" >> flushOut >> getUserCoord
 
 -- Get's a User's move
