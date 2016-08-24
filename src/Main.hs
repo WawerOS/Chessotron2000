@@ -57,27 +57,27 @@ justOrError Nothing = error "The AI ran out of things to say."
 flushOut :: IO ()
 flushOut = hFlush stdout
 
+combine :: (Bool,Bool) -> Bool
+combine (a,a') = a && a'
 -- Get's a single coordinate
-getUserCoord :: IO Pos
+getUserCoord :: IO Move
 getUserCoord = do
   putStr ">>"
   flushOut
   line <- getLine
-  let maybeCoord = maybeRead line :: Maybe Pos
-  let coord = maybeOrDefault maybeCoord (8,8)
-  if isValidCoord coord
+  let maybeCoord = maybeRead line :: Maybe Move
+  let coord = maybeOrDefault maybeCoord NoMove
+  if combine $ mapMove isValidCoord coord
   then return coord
   else putStrLn "It's 0-7 not 1-8. It's confusing I know but what can ya do?" >> flushOut >> getUserCoord
 
 -- Get's a User's move
 getUserMove :: Tree (Move,Board) -> IO (Move,Tree (Move,Board))
 getUserMove tr = do
-  z <- getUserCoord
-  putStrLn $ "Moving " ++ show z ++ " to ..."
+  mv <- getUserCoord
+  print mv
   flushOut
-  z' <- getUserCoord
   let b = maybeOrDefault (getValAt tr []) (NoMove,newBoard)
-  let mv = Move z z'
   return (mv,Leaf (mv,makeMove mv (snd b)))
 
 -- Checks wheather some one has won yet
