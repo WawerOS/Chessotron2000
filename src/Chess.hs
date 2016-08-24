@@ -165,7 +165,10 @@ Tasks:
      p' = getPiece b z'
      place = if z' == (0,0) then (0,2) else (0,6)
      place' = if z' == (0,0) then (0,3) else (0,5)
- makeMove (EnPassant z z') b = movePiece (movePiece b z z') z' (adder z' (1,0))
+ makeMove (EnPassant z z') b = movePiece (movePiece b z z') z' (adder z' (dir,0))
+  where
+    clr = getColor $ getPiece b z
+    dir = pawnDir clr
  makeMove NoMove b = b
 
  -- takes a tuple and  checks if it is a valid coordinate
