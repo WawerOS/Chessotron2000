@@ -229,7 +229,7 @@ Tasks:
  checkMate :: Color -> Board -> Bool
  checkMate EmptyColor _ = False
  checkMate c b = (check c b && all (check c) (map snd $ getAllMoves b)) ||
-                    (null $ filterBoard (\b z -> (getPiece b z == (Piece c King))) b)
+                    null (filterBoard (\b z -> (getPiece b z == Piece c King)) b)
 
  -- Checks if a side is in check
  check :: Color -> Board -> Bool
