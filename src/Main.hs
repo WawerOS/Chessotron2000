@@ -45,7 +45,7 @@ chessAIMove c = tupleMaybe . chessAI c
 getAIMove :: Color -> Tree (Move,Board) -> IO (Move,Tree (Move,Board))
 getAIMove c b = do
   let maybeTpl = chessAIMove c b
-  let tpl = maybeOrDefault maybeTpl (NoMove,firstNode)
+  let tpl = justOrError maybeTpl
   return tpl
 
 -- So unsafe you wouldn't believe
@@ -58,8 +58,8 @@ flushOut :: IO ()
 flushOut = hFlush stdout
 
 combine :: (Bool,Bool) -> Bool
-combine = uncurry (&&)
--- Get's a single Move
+combine (a,a') = a && a'
+-- Get's a single coordinate
 getUserCoord :: IO Move
 getUserCoord = do
   putStr ">>"
@@ -67,9 +67,9 @@ getUserCoord = do
   line <- getLine
   let maybeMv = maybeRead line :: Maybe Move
   let mv = maybeOrDefault maybeMv NoMove
-  if combine ( mapMove isValidCoord mv) && mv /= NoMove
+  if combine (mapMove isValidCoord mv) && mv /= NoMove
   then return mv
-  else putStrLn "Could you repeat that I coudln't hear you" >> flushOut >> getUserCoord
+  else putStrLn "It's 0-7 not 1-8. It's confusing I know but what can ya do?" >> flushOut >> getUserCoord
 
 -- Get's a User's move
 getUserMove :: Tree (Move,Board) -> IO (Move,Tree (Move,Board))
