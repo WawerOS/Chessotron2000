@@ -1,9 +1,9 @@
-import Tree
-import Chess
-import Data.Maybe
-import System.IO
-import Control.Monad
-import Control.Applicative()
+import           Chess
+import           Control.Applicative ()
+import           Control.Monad
+import           Data.Maybe
+import           System.IO
+import           Tree
 
 {-
   The UI for my chess program
