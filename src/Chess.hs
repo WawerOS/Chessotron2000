@@ -99,8 +99,8 @@ Tasks:
 
  -- Prints a board
  printBoard :: Array (Integer,Integer) Piece -> Integer -> String
- printBoard a 0 = "|" ++ concat [ show (a ! (0,y)) ++ "|" | y <- [0..7]] ++ newLine ++ interrupt
- printBoard a x = "|" ++ concat [ show (a ! (x,y)) ++ "|" | y <- [0..7]] ++ newLine ++ interrupt ++ printBoard a (x-1)
+ printBoard a (-1) = " " ++ concat [ show y ++ " " | y <- [0..7]] ++  newLine
+ printBoard a x = "|" ++ concat [ show (a ! (x,y)) ++ "|" | y <- [0..7]] ++ show x ++ newLine ++ interrupt ++ printBoard a (x-1)
 
  -- A holder for two tuples makes things easier to interface with
  data Move = Move Pos Pos | EnPassant Pos Pos | Castle Pos Pos | NoMove
@@ -160,7 +160,7 @@ Tasks:
  -- implements Move interface
  makeMove :: Move -> Board -> Board
  makeMove (Move z z') b = movePiece b z z'
- makeMove (Castle z z'@(x,y)) b@(Board a) = Board ( a // [(place,p),(place',p')])
+ makeMove (Castle z z'@(x,y)) b@(Board a) = Board ( a // [(z',emptyPiece),(z,emptyPiece),(place,p),(place',p')])
    where
      p = getPiece b z
      p' = getPiece b z'
@@ -362,8 +362,8 @@ Tasks:
 
  -- Computes the strategic value of a board
  strategyVal :: Color -> Board -> Double
- strategyVal c b | checkMate c b = -1
- strategyVal c b | checkMate (opposite c) b = 1
- strategyVal c b | check c b = -0.9999
- strategyVal c b | check (opposite c) b = 0.9999
+ strategyVal c b | checkMate c b = -1.5
+ strategyVal c b | checkMate (opposite c) b = 1.5
+ strategyVal c b | check c b = -1
+ strategyVal c b | check (opposite c) b = 1
  strategyVal c b = tanh $ sumPieceScore c b
