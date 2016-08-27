@@ -3,22 +3,22 @@
 
 name:                chess
 version:             0.1.0.0
-synopsis:            A poorly made chess automaton
--- description:
+-- synopsis:            
+-- description:         
 license:             MIT
 license-file:        LICENSE
 author:              Waweros
 maintainer:          lion@waposta.com
--- copyright:
+-- copyright:           
 category:            Game
 build-type:          Simple
--- extra-source-files:
+extra-source-files:  README.md
 cabal-version:       >=1.10
 
 executable chess
   main-is:             Main.hs
-  -- other-modules:
-  -- other-extensions:
-  build-depends:       base >=4.9 && <5.0, array >=0.5 && <0.6 
+  -- other-modules:       
+  -- other-extensions:    
+  build-depends:       base >=4.9 && <4.10, array >=0.5 && <0.6
   hs-source-dirs:      src
   default-language:    Haskell2010
