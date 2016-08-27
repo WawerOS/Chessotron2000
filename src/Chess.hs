@@ -164,8 +164,8 @@ Tasks:
    where
      p = getPiece b z
      p' = getPiece b z'
-     place = if x == y then (x,2) else (x,6)
-     place' = if x == y then (x,3) else (x,5)
+     place = if y == 0 then (x,2) else (x,6)
+     place' = if y == 0 then (x,3) else (x,5)
  makeMove (EnPassant z z') b = movePiece (movePiece b z z') z' (adder z' (dir,0))
   where
     clr = getColor $ getPiece b z
