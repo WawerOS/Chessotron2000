@@ -100,11 +100,11 @@ playAGame :: (Tree (Move,Board) -> IO (Move,Tree (Move,Board))) -> (Tree (Move,B
 playAGame whitePlayer blackPlayer b = do
 
   mvRec <- whitePlayer b
-  let b' = getValAt (snd mvRec) [] >>= Just . snd
+  let b' =  snd <$> getValAt (snd mvRec) []
   putStrLn $ showMaybe b' ++ newLine ++ "White: " ++ show (fst mvRec)
 
   mvRec' <-   blackPlayer (snd mvRec)
-  let b'' =  getValAt (snd mvRec') [] >>= Just . snd
+  let b'' =  snd <$> getValAt (snd mvRec') [] 
   putStrLn $ showMaybe b'' ++ newLine ++ "Black: " ++ show (fst mvRec')
 
   winner <- winnerCheck (maybeOrDefault b'' newBoard)
