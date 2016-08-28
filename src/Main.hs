@@ -4,6 +4,7 @@ import           Control.Monad
 import           Data.Maybe
 import           System.IO
 import           Tree
+import           System.Exit
 
 {-
   The UI for my chess program
@@ -12,25 +13,26 @@ import           Tree
 -}
 
 -- generates a full tree of moves
-moveTree :: Color -> Tree (Move,Board) -> Integer -> Tree (Move,Board)
-moveTree clr = applyNTimes id (getAllOurMoves clr . snd,getAllOurMoves clr' . snd)
+moveTree :: Color -> (Move,Board) -> Integer -> Tree (Move,Board)
+moveTree clr = applyNTimes id (getAllOurMoves clr . snd,getAllOurMoves clr' . snd) . Leaf
   where
     clr' = opposite clr
 
 -- First node of the game tree
-firstNode :: Tree (Move,Board)
-firstNode = Leaf (NoMove,newBoard)
+firstNode :: (Move,Board)
+firstNode = (NoMove,newBoard)
 
 -- How far the rabbit hole goes
 moveTreeDepth :: Integer
 moveTreeDepth = 3
 
 -- Actual AI
-chessAI :: Color ->  Tree (Move,Board) -> (Maybe Move,Maybe (Tree (Move,Board)) )
-chessAI c b = ((Just . fst <=< getValAt tr . (:[])) =<< ind , getSubTree tr . (:[]) =<< ind)
+chessAI :: Color ->  [(Move,Board)] -> Maybe (Move,Board)
+chessAI c (b:_) = b'
   where
     ind = chooser (alphaBeta (-2) 2 True) $ applyAtEnds (const 0) ((:[]) . strategyVal c . snd) tr
     tr = moveTree c b moveTreeDepth
+    b' = getValAt tr . (:[]) =<< ind
 
 -- Converts a tuple of Maybe's to a Maybe tuple
 tupleMaybe :: (Maybe a,Maybe b) -> Maybe (a,b)
@@ -38,20 +40,12 @@ tupleMaybe (Nothing,_) = Nothing
 tupleMaybe (_,Nothing) = Nothing
 tupleMaybe (Just a,Just b) = Just (a,b)
 
--- Final completed interface with the AI
-chessAIMove c = tupleMaybe . chessAI c
-
 -- IO interface for the AI
-getAIMove :: Color -> Tree (Move,Board) -> IO (Move,Tree (Move,Board))
+getAIMove :: Color -> [(Move,Board)] -> IO (Move,Board)
 getAIMove c b = do
-  let maybeTpl = chessAIMove c b
-  let tpl = justOrError maybeTpl
+  let maybeTpl = chessAI c b
+  let tpl = maybeOrDefault maybeTpl (NoMove,newBoard)
   return tpl
-
--- So unsafe you wouldn't believe
-justOrError :: Maybe a -> a
-justOrError (Just a) = a
-justOrError Nothing = error "The AI ran out of things to say."
 
 -- Flush's the stdout so the user can actually see what's going on
 flushOut :: IO ()
@@ -59,26 +53,23 @@ flushOut = hFlush stdout
 
 combine :: (Bool,Bool) -> Bool
 combine (a,a') = a && a'
--- Get's a single coordinate
-getUserCoord :: IO Move
-getUserCoord = do
-  putStr ">>"
-  flushOut
-  line <- getLine
-  let maybeMv = maybeRead line :: Maybe Move
-  let mv = maybeOrDefault maybeMv NoMove
-  if combine (mapMove isValidCoord mv) && mv /= NoMove
-  then return mv
-  else putStrLn "It's 0-7 not 1-8. It's confusing I know but what can ya do?" >> flushOut >> getUserCoord
 
 -- Get's a User's move
-getUserMove :: Tree (Move,Board) -> IO (Move,Tree (Move,Board))
-getUserMove tr = do
-  mv <- getUserCoord
-  print mv
+getUserMove :: [(Move,Board)] -> IO (Move,Board)
+getUserMove ls@(m:_:ms) = do
+  putStr ">>"
   flushOut
-  let b = maybeOrDefault (getValAt tr []) (NoMove,newBoard)
-  return (mv,Leaf (mv,makeMove mv (snd b)))
+  input <- getLine
+  when (input ==  ":q") exitSuccess
+  if input == ":b"
+    then getUserMove ms
+    else do
+      let mv = maybeOrDefault (maybeRead input) NoMove :: Move
+      if mv == NoMove then putStrLn (newLine ++"Please ennuciate") >> getUserMove ls
+        else do
+          print mv
+          flushOut
+          return (mv,makeMove mv (snd m))
 
 -- Checks wheather some one has won yet
 winnerCheck :: Board -> IO Bool
@@ -96,21 +87,21 @@ showMaybe Nothing = ""
 showMaybe (Just a) = show a
 
 -- The function used for playing the game
-playAGame :: (Tree (Move,Board) -> IO (Move,Tree (Move,Board))) -> (Tree (Move,Board) -> IO (Move,Tree (Move,Board))) -> Tree (Move,Board) -> IO ()
-playAGame whitePlayer blackPlayer b = do
+playAGame :: ([(Move,Board)] -> IO (Move,Board)) -> ([(Move,Board)] -> IO (Move,Board)) -> [(Move,Board)] -> IO ()
+playAGame whitePlayer blackPlayer m = do
 
-  mvRec <- whitePlayer b
-  let b' =  snd <$> getValAt (snd mvRec) []
-  putStrLn $ showMaybe b' ++ newLine ++ "White: " ++ show (fst mvRec)
+  mvRec <- whitePlayer m
+  let b' =  snd mvRec
+  putStrLn $ show b' ++ newLine ++ "White: " ++ show (fst mvRec)
 
-  mvRec' <-   blackPlayer (snd mvRec)
-  let b'' =  snd <$> getValAt (snd mvRec') [] 
-  putStrLn $ showMaybe b'' ++ newLine ++ "Black: " ++ show (fst mvRec')
+  mvRec' <-   blackPlayer (mvRec:m)
+  let b'' =  snd mvRec'
+  putStrLn $ show b'' ++ newLine ++ "Black: " ++ show (fst mvRec')
 
-  winner <- winnerCheck (maybeOrDefault b'' newBoard)
+  winner <- winnerCheck b''
   if winner
-  then winnerReward (maybeOrDefault b'' newBoard)
-  else playAGame whitePlayer blackPlayer (snd mvRec')
+  then winnerReward b''
+  else playAGame whitePlayer blackPlayer (mvRec':mvRec:m)
 
 -- Returns Nothing if  there's nothing and a Just if there is
 maybeRead :: Read a => String -> Maybe a
@@ -140,9 +131,9 @@ getColor = do
   else putStrLn "Use capitals. I'm a stickler for grammar!" >> flushOut >> getColor
 
 -- Matches colors to  proper inputs
-colorMatcher :: Color -> (Tree (Move,Board) -> IO (Move,Tree (Move,Board))) -> (Tree (Move,Board) -> IO (Move,Tree (Move,Board))) -> IO ()
-colorMatcher c player1 player2 | c == White = playAGame player1 player2 firstNode
-colorMatcher c player1 player2 | c == Black = playAGame player2 player1 firstNode
+colorMatcher :: Color -> ([(Move,Board)] -> IO (Move,Board)) -> ([(Move,Board)] -> IO (Move,Board)) -> IO ()
+colorMatcher c player1 player2 | c == White = playAGame player1 player2 [firstNode]
+colorMatcher c player1 player2 | c == Black = playAGame player2 player1 [firstNode]
 colorMatcher _ _ _ = putStrLn "What have you done!?!" >> flushOut
 
 -- The main function
