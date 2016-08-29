@@ -13,6 +13,7 @@ Piece(),
 Board(),
 Pos,
 Move(Move,NoMove),
+numToPos,
 mapMove,
 newBoard,
 easyMove,
@@ -59,6 +60,14 @@ Tasks:
   show Rook  = "r"
   show Pawn = "p"
 
+ instance Read PieceType where
+  readsPrec _ ('k':xs) = [(King,xs)]
+  readsPrec _ ('q':xs) = [(Queen,xs)]
+  readsPrec _ ('b':xs) = [(Bishop,xs)]
+  readsPrec _ ('n':xs) = [(Knight,xs)]
+  readsPrec _ ('r':xs) = [(Rook,xs)]
+  readsPrec _ ('p':xs) = [(Pawn,xs)]
+
  -- Used to represent a pieces side, includes represention of the the side of a empty space
  data Color  = Black | White | EmptyColor
    deriving (Eq,Show,Read)
@@ -78,6 +87,15 @@ Tasks:
   show (Piece White p) = show p
   show (Piece EmptyColor _) = " "
 
+ instance Read Piece where
+
+   readsPrec _ (chr:str) | isUpper chr = [(Piece Black pType,str)]
+    where
+      pType = read [toLower chr] :: PieceType
+   readsPrec _ (chr:str) | isLower chr = [(Piece White (read [chr]),str)]
+   readsPrec _ (' ':str) = [(emptyPiece,str)]
+   readsPrec _ _ = []
+
 {-
  The next two functions provide acess to the
  components of a Piece
@@ -96,6 +114,25 @@ Tasks:
   deriving Eq
  instance Show Board where
    show (Board a) = printBoard a 7
+   
+ instance Read Board where
+   readsPrec _ string | length strBoard /= 64 = []
+    where
+      strBoard = filter (\x -> x /= '-' && x /= '\n'
+                            && not (isNumber x) && x /= '|') $ take 296 string
+   readsPrec _ string = [(board,xs)]
+    where
+      xs = drop 314 string
+      strBoard = filter (\x -> x /= '-' && x /= '\n'
+                            && not (isNumber x) && x /= '|') $ take 296 string
+      assign _ [] = []
+      assign j (p:str) = (numToPos j,read [p] :: Piece) : assign (j + 1) str
+      board = Board $ array ((0,0),(7,7)) (assign 0 strBoard)
+
+ numToPos :: Int -> Pos
+ numToPos j  = (fromIntegral $ i `div` 8,fromIntegral $ i `mod` 8)
+  where
+    i = 63 - j
 
  -- Prints a board
  printBoard :: Array (Integer,Integer) Piece -> Integer -> String
