@@ -150,7 +150,7 @@ getColor = do
 
 -- Matches colors to  proper inputs
 colorMatcher :: Color -> ([(Move,Board)] -> IO (Move,Board)) -> ([(Move,Board)] -> IO (Move,Board)) -> IO ()
-colorMatcher c player1 player2 | c == White = print firstNode >> playAGame player1 player2 [firstNode]
+colorMatcher c player1 player2 | c == White = print (snd firstNode) >> playAGame player1 player2 [firstNode]
 colorMatcher c player1 player2 | c == Black = playAGame player2 player1 [firstNode]
 colorMatcher _ _ _ = putStrLn "What have you done!?!" >> exitFailure
 
