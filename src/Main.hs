@@ -74,10 +74,10 @@ getUserMove [m] = do
     then putStrLn "There's nothing there!!!!" >> getUserMove [m]
     else do
       let mv = maybeOrDefault (maybeRead input) NoMove :: Move
-      if mv == NoMove then putStrLn (newLine ++"Please ennuciate") >> getUserMove [m]
+      if mv == NoMove then putStrLn (newLine ++"Please enunciate") >> getUserMove [m]
         else afterChoice m mv
 
-getUserMove ls@[m,_] = getUserMove [m]
+getUserMove [m,_] = getUserMove [m]
 
 getUserMove ls@(m:_:ms) = do
   input <- beforeChoice
@@ -86,7 +86,7 @@ getUserMove ls@(m:_:ms) = do
     then print (snd $ head ms) >> getUserMove ms
     else do
       let mv = maybeOrDefault (maybeRead input) NoMove :: Move
-      if mv == NoMove then putStrLn "Please ennuciate" >> getUserMove ls
+      if mv == NoMove then putStrLn "Please enunciate" >> getUserMove ls
         else afterChoice m mv
 
 -- Checks wheather some one has won yet
