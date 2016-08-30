@@ -1,5 +1,5 @@
 module Tree (
-  Tree(Leaf),
+  Tree(Leaf,Branch),
   getVal,
   getSubTree,
   getValAt,
@@ -52,7 +52,7 @@ module Tree (
 
  -- Combines getVal and getSubTree to return a specific value
  getValAt :: Tree a -> [Int] -> Maybe a
- getValAt tr xs = getSubTree tr xs >>= (Just . getVal)
+ getValAt tr xs = getVal <$> getSubTree tr xs
 
 
  -- Gives the index of the greatest element
@@ -72,7 +72,7 @@ module Tree (
  alphaBeta :: Ord a => a -> a ->  Bool -> Tree a -> a
  alphaBeta  _ _ _ (Leaf a) = a
  alphaBeta  a b True (Branch _ ls) = maxLeq a b ls
- alphaBeta  a b False (Branch _ ls) = maxLeq a b ls
+ alphaBeta  a b False (Branch _ ls) = minLeq a b ls
 
  minLeq :: Ord a => a -> a -> [Tree a] -> a
  minLeq a _ [] = a
