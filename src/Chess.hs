@@ -114,7 +114,7 @@ Tasks:
   deriving Eq
  instance Show Board where
    show (Board a) = printBoard a 7
-   
+
  instance Read Board where
    readsPrec _ string | length strBoard /= 64 = []
     where
@@ -369,13 +369,13 @@ Tasks:
  pieceVal  Knight = 3
  pieceVal  Bishop = 3
  pieceVal  Rook = 4
- pieceVal Queen = 9
+ pieceVal Queen = 6
 
  oneSidePieceScore :: Double
  oneSidePieceScore = sum (map (pieceVal . getPieceType . getPiece newBoard) $ filterBoard isPiece newBoard)/2
 
  sumPieceScore :: Color -> Board -> Double
- sumPieceScore clr brd = ((*(-1)) . sum) $ map (pieceVal . getPieceType . getPiece brd) $ filterBoard (\b -> isOurSide clr' . getPiece b) newBoard
+ sumPieceScore clr brd = ((*(-1)) . sum) $ map (pieceVal . getPieceType . getPiece brd) $ filterBoard (\b -> isOurSide clr' . getPiece b) brd
   where
     clr' = opposite clr
  -- Convience function for comparing colors and getting coeffiencts
@@ -401,6 +401,8 @@ Tasks:
  strategyVal :: Color -> Board -> Double
  strategyVal c b | checkMate c b = -1.5
  strategyVal c b | checkMate (opposite c) b = 1.5
- strategyVal c b | check c b = -1
- strategyVal c b | check (opposite c) b = 1
- strategyVal c b = tanh $ sumPieceScore c b
+ strategyVal c b | check c b = -1.2
+ strategyVal c b | check (opposite c) b = 1.2
+ strategyVal c b = tanh ( sumPieceScore c b - sumPieceScore c' b)
+  where
+    c' = opposite c
