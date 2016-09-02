@@ -2,7 +2,9 @@ module Tree (
   Tree(Leaf,Branch),
   getVal,
   getSubTree,
+  getAllSubTrees,
   getValAt,
+  findMax,
   chooser,
   maxmin,
   alphaBeta,
@@ -38,10 +40,14 @@ module Tree (
  oneTree :: Tree Integer
  oneTree = Branch 1 [oneTree,zeroTree]
 
+ getAllSubTrees :: Tree a -> [Tree a]
+ getAllSubTrees (Leaf _) = []
+ getAllSubTrees (Branch _ trs) = trs
+
  --  Given a path to take retrieves subtree's
  getSubTree :: Tree a -> [Int] -> Maybe (Tree a)
  getSubTree tr [] = Just tr
- getSubTree (Leaf _) xs | not $ null xs = Nothing
+ getSubTree (Leaf _) xs | not (null xs) = Nothing
  getSubTree (Branch _ subTr) (x:_) | x > length subTr = Nothing
  getSubTree (Branch _ subTr) (x:xs) = getSubTree (subTr !! x) xs
 
@@ -58,25 +64,25 @@ module Tree (
  -- Gives the index of the greatest element
  findMax :: Ord a => [a] -> Maybe Int
  findMax [] = Nothing
- findMax (y:ys) = Just $ helper (0,y) 1 ys
+ findMax (y:ys) = Just $ helper 0 y 1 ys
    where
-    helper (i,_) _ [] = i
-    helper (i,x) j (z:zs) | x > z = helper (i,x) (j+1) zs
-    helper (_,x) j (z:zs) | z > x = helper (j,z) (j+1) zs
-    helper _ _ _ = 0
+    helper i _ _ [] = i
+    helper i x j (z:zs) | x >= z = helper i x (j+1) zs
+    helper _ x j (z:zs) | z > x = helper j z (j+1) zs
+    helper _ _ _ _ = 0
 
  chooser :: Ord b => (Tree a -> b) -> Tree a -> Maybe Int
- chooser f (Branch _ y) = findMax $ map f y
+ chooser f (Branch _ cly) = findMax $ map f cly
  chooser _ _ = Nothing
 
- alphaBeta :: Ord a => a -> a ->  Bool -> Tree a -> a
+ alphaBeta :: (Ord a,Num a) => a -> a ->  Bool -> Tree a -> a
  alphaBeta  _ _ _ (Leaf a) = a
  alphaBeta  a b True (Branch _ ls) = maxLeq a b ls
  alphaBeta  a b False (Branch _ ls) = minLeq a b ls
 
- minLeq :: Ord a => a -> a -> [Tree a] -> a
- minLeq a _ [] = a
- minLeq a b _ | a >= b = a
+ minLeq :: (Ord a,Num a) => a -> a -> [Tree a] -> a
+ minLeq _ b [] = b
+ minLeq a b _ | a >= b = b
  minLeq a b (x:xs) | val x < b = maxLeq a (val x) xs
   where
    val = alphaBeta a b True
@@ -84,18 +90,15 @@ module Tree (
   where
     val = alphaBeta a b True
 
- maxLeq :: Ord a => a -> a -> [Tree a] -> a
+ maxLeq :: (Ord a,Num a) => a -> a -> [Tree a] -> a
  maxLeq a _ [] = a
- maxLeq a b _ | a >= b = a
- maxLeq a b (x:xs) | val x > a = maxLeq (val x) b xs
+ maxLeq a b _ | a > b = a
+ maxLeq a b (x:xs) | val x >= a = maxLeq (val x) b xs
   where
    val = alphaBeta a b False
- maxLeq a b (x:xs) | val x <= a = maxLeq a b xs
+ maxLeq a b (x:xs) | val x < a = maxLeq a b xs
   where
     val = alphaBeta a b False
-
-
-
 
  -- Naive minimax implementation
  maxa :: ([a] -> a,[a] -> a) -> Tree a -> a
