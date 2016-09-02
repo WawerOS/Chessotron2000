@@ -364,18 +364,18 @@ Tasks:
  -- Assigns a strategic value to each piece
  pieceVal :: Num a => PieceType -> a
  pieceVal EmptyType = 0
- pieceVal King = 0
+ pieceVal King = 1
  pieceVal  Pawn = 1
- pieceVal  Knight = 3
- pieceVal  Bishop = 3
- pieceVal  Rook = 4
- pieceVal Queen = 6
+ pieceVal  Knight = 1
+ pieceVal  Bishop = 1
+ pieceVal  Rook = 1
+ pieceVal Queen = 1
 
  oneSidePieceScore :: Double
  oneSidePieceScore = sum (map (pieceVal . getPieceType . getPiece newBoard) $ filterBoard isPiece newBoard)/2
 
  sumPieceScore :: Color -> Board -> Double
- sumPieceScore clr brd = ((*(-1)) . sum) $ map (pieceVal . getPieceType . getPiece brd) $ filterBoard (\b -> isOurSide clr' . getPiece b) brd
+ sumPieceScore clr brd = oneSidePieceScore + ( ((*(-1)) . sum) $ map (pieceVal . getPieceType . getPiece brd) $ filterBoard (\b -> isOurSide clr' . getPiece b) brd)
   where
     clr' = opposite clr
  -- Convience function for comparing colors and getting coeffiencts
