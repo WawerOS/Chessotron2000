@@ -31,7 +31,7 @@ module Tree (
 
  instance Foldable Tree where
   foldMap f (Leaf a) = f a
-  foldMap f (Branch a br) = foldMap (foldMap f) br <> f a
+  foldMap f (Branch a br) = f a <> foldMap (foldMap f) br
 
 -- A pair of infinite Tree
  zeroTree :: Tree Integer
