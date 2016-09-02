@@ -30,9 +30,10 @@ moveTreeDepth = 3
 chessAI :: Color ->  [(Move,Board)] -> Maybe (Move,Board)
 chessAI c (b:_) = b'
   where
-    ind = chooser (alphaBeta (-2) 2 True) $ applyAtEnds (const 0) ((:[]) . strategyVal c . snd) tr
-    tr = moveTree c b moveTreeDepth
-    b' = getValAt tr . (:[]) =<< ind
+    a = moveTree c b moveTreeDepth
+    valTr = fmap (strategyVal c . snd) a
+    ind = chooser (alphaBeta (-1/0) (1/0) True) valTr
+    b' = ind >>= (\v -> getValAt a [v])
 
 -- Converts a tuple of Maybe's to a Maybe tuple
 tupleMaybe :: (Maybe a,Maybe b) -> Maybe (a,b)
