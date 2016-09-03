@@ -376,9 +376,8 @@ Tasks:
  oneSidePieceScore = sum (map (pieceVal . getPieceType . getPiece newBoard) $ filterBoard isPiece newBoard)/2
 
  sumPieceScore :: Color -> Board -> Double
- sumPieceScore clr brd = ((*(-1)) . sum) $ map (pieceVal . getPieceType . getPiece brd) $ filterBoard (\b -> isOurSide clr' . getPiece b) brd
-  where
-    clr' = opposite clr
+ sumPieceScore clr brd = sum $ map (pieceVal . getPieceType . getPiece brd) $ filterBoard (\b -> isOurSide clr . getPiece b) brd
+ 
  -- Convience function for comparing colors and getting coeffiencts
  colorSign :: Num a => Color -> Color -> a
  colorSign c c' | c == c' = 1
