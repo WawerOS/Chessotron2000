@@ -55,6 +55,13 @@ flushOut = hFlush stdout
 combine :: (Bool,Bool) -> Bool
 combine (a,a') = a && a'
 
+
+saveSequence :: FilePath  -> [(Move,Board)] -> IO ()
+saveSequence fp sq = writeFile fp (show sq)
+
+readSequence :: FilePath -> IO [(Move,Board)]
+readSequence fp = read <$> readFile fp
+
 beforeChoice = do
   putStr ">>"
   flushOut
@@ -71,11 +78,11 @@ getUserMove :: [(Move,Board)] -> IO (Move,Board)
 getUserMove [m] = do
   input <- beforeChoice
   when (input ==  ":q") exitSuccess
-  if input == ":b"
-    then putStrLn "There's nothing there!!!!" >> getUserMove [m]
+  if input == ":b" || input == ":l"
+    then backOrLoad input [m] >> getUserMove [m]
     else do
       let mv = maybeOrDefault (maybeRead input) NoMove :: Move
-      if mv == NoMove then putStrLn (newLine ++"Please enunciate") >> getUserMove [m]
+      if mv == NoMove then putStrLn ("Please enunciate") >> getUserMove [m]
         else afterChoice m mv
 
 getUserMove [m,_] = getUserMove [m]
@@ -83,12 +90,24 @@ getUserMove [m,_] = getUserMove [m]
 getUserMove ls@(m:_:ms) = do
   input <- beforeChoice
   when (input ==  ":q") exitSuccess
-  if input == ":b"
-    then print (snd $ head ms) >> getUserMove ms
+  when (input == ":s") (saveSequence "tmp" ls)
+
+  if input == ":b" || input == ":l"
+    then backOrLoad input ms
     else do
       let mv = maybeOrDefault (maybeRead input) NoMove :: Move
       if mv == NoMove then putStrLn "Please enunciate" >> getUserMove ls
         else afterChoice m mv
+
+backOrLoad :: String -> [(Move,Board)] -> IO (Move,Board)
+backOrLoad ":l" _ = do
+  newSave <- readSequence "tmp"
+  let c = if (mod) (length newSave) 2 == 0 then White else Black
+  putStrLn ("Your Move " ++ show c ++ newLine)
+  print (snd $ head newSave)
+  getUserMove newSave
+backOrLoad ":b" (b:xs) = print (snd $ head xs) >> getUserMove xs
+backOrLoad _ [m] = putStrLn "There's Nothing There!!" >> getUserMove [m]
 
 -- Checks wheather some one has won yet
 winnerCheck :: Board -> IO Bool
@@ -111,11 +130,11 @@ playAGame whitePlayer blackPlayer m = do
 
   mvRec <- whitePlayer m
   let b' =  snd mvRec
-  putStrLn $ show b' ++ newLine ++ "White: " ++ show (fst mvRec)
+  putStrLn $ show b' ++ newLine ++ "White: " ++ showNice (fst mvRec)
 
   mvRec' <-   blackPlayer (mvRec:m)
   let b'' =  snd mvRec'
-  putStrLn $ show b'' ++ newLine ++ "Black: " ++ show (fst mvRec')
+  putStrLn $ show b'' ++ newLine ++ "Black: " ++ showNice (fst mvRec')
 
   winner <- winnerCheck b''
   if winner
