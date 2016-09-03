@@ -74,40 +74,41 @@ afterChoice m mv= do
 
 
 -- Get's a User's move
-getUserMove :: [(Move,Board)] -> IO (Move,Board)
-getUserMove [m] = do
+getUserMove :: FilePath -> [(Move,Board)] -> IO (Move,Board)
+
+getUserMove fp [m] = do
   input <- beforeChoice
   when (input ==  ":q") exitSuccess
   if input == ":b" || input == ":l"
-    then backOrLoad input [m] >> getUserMove [m]
+    then backOrLoad input fp [m]
     else do
       let mv = maybeOrDefault (maybeRead input) NoMove :: Move
-      if mv == NoMove then putStrLn ("Please enunciate") >> getUserMove [m]
+      if mv == NoMove then putStrLn "I still  need a move" >> getUserMove fp [m]
         else afterChoice m mv
 
-getUserMove [m,_] = getUserMove [m]
+getUserMove fp [m,_] = getUserMove fp [m]
 
-getUserMove ls@(m:_:ms) = do
+getUserMove fp ls@(m:_:ms) = do
   input <- beforeChoice
   when (input ==  ":q") exitSuccess
-  when (input == ":s") (saveSequence "tmp" ls)
+  when (input == ":s") (saveSequence fp ls)
 
   if input == ":b" || input == ":l"
-    then backOrLoad input ms
+    then backOrLoad input fp ms
     else do
       let mv = maybeOrDefault (maybeRead input) NoMove :: Move
-      if mv == NoMove then putStrLn "Please enunciate" >> getUserMove ls
+      if mv == NoMove then putStrLn "I still  need a move" >> getUserMove fp ls
         else afterChoice m mv
 
-backOrLoad :: String -> [(Move,Board)] -> IO (Move,Board)
-backOrLoad ":l" _ = do
-  newSave <- readSequence "tmp"
+backOrLoad :: String -> FilePath -> [(Move,Board)] -> IO (Move,Board)
+backOrLoad ":l" fp _ = do
+  newSave <- readSequence fp
   let c = if (mod) (length newSave) 2 == 0 then White else Black
   putStrLn ("Your Move " ++ show c ++ newLine)
   print (snd $ head newSave)
-  getUserMove newSave
-backOrLoad ":b" (b:xs) = print (snd $ head xs) >> getUserMove xs
-backOrLoad _ [m] = putStrLn "There's Nothing There!!" >> getUserMove [m]
+  getUserMove fp newSave
+backOrLoad ":b" fp (b:xs) = print (snd $ head xs) >> getUserMove fp xs
+backOrLoad _ fp [m] = putStrLn "There's Nothing There!!" >> getUserMove fp [m]
 
 -- Checks wheather some one has won yet
 winnerCheck :: Board -> IO Bool
@@ -158,8 +159,6 @@ isThere Nothing = False
 -- Get's user's Color
 getColor :: IO Color
 getColor = do
-  putStrLn "So your'e here for a  game eh!"
-  flushOut
   putStrLn "So what Color, Black or White?"
   flushOut
   msg <- getLine
@@ -169,14 +168,53 @@ getColor = do
   else putStrLn "Use capitals. I'm a stickler for grammar!" >> flushOut >> getColor
 
 -- Matches colors to  proper inputs
-colorMatcher :: Color -> ([(Move,Board)] -> IO (Move,Board)) -> ([(Move,Board)] -> IO (Move,Board)) -> IO ()
-colorMatcher c player1 player2 | c == White = print (snd firstNode) >> playAGame player1 player2 [firstNode]
-colorMatcher c player1 player2 | c == Black = playAGame player2 player1 [firstNode]
-colorMatcher _ _ _ = putStrLn "What have you done!?!" >> exitFailure
+colorMatcher :: Color -> [(Move,Board)] -> ([(Move,Board)] -> IO (Move,Board)) -> ([(Move,Board)] -> IO (Move,Board)) -> IO ()
+colorMatcher c hist player1 player2 | c == White = print (snd firstNode) >> playAGame player1 player2 hist
+colorMatcher c hist player1 player2 | c == Black = playAGame player2 player1 hist
+colorMatcher _ _ _ _ = putStrLn "What have you done!?!" >> exitFailure
+
+startChoice :: IO ()
+startChoice = do
+  putStrLn "Choices!!!"
+  flushOut
+  putStrLn "1 -> New Game!!"
+  flushOut
+  putStrLn "2 -> Old Game!!"
+  flushOut
+  putStrLn "3 -> Rule of Three"
+  flushOut
+  putStr ">>"
+  flushOut
+  numString <- getLine
+  let num = maybeRead numString :: Maybe Int
+  case num of
+    Just 1 -> do
+      putStrLn "Cool choose a log file"
+      flushOut
+      putStr ">>"
+      flushOut
+      file <- getLine
+      clr <- getColor
+      colorMatcher clr [firstNode] (getUserMove file) (getAIMove (opposite clr))
+
+    Just 2 -> do
+      putStrLn "What log file?"
+      flushOut
+      putStr ">>"
+      flushOut
+      file <- getLine
+      game <- readSequence file
+      let clr = if (mod) (length game) 2 == 0 then White else Black
+      putStrLn ("Your playing as " ++ show clr)
+      colorMatcher clr game (getUserMove file) (getAIMove (opposite clr))
+
+    Just 3 -> do
+      putStrLn "Yay tropes!!"
+      flushOut
+      startChoice
+
+    _ -> startChoice
 
 -- The main function
 main :: IO ()
-main = do
-  clr <- getColor
-  let aiColor = opposite clr
-  colorMatcher clr getUserMove (getAIMove aiColor)
+main = startChoice
