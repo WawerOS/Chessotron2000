@@ -18,6 +18,7 @@ mapMove,
 newBoard,
 easyMove,
 strategyVal,
+showNice,
 getAllMoves,
 isValidCoord,
 makeMove,
@@ -141,13 +142,13 @@ Tasks:
 
  -- A holder for two tuples makes things easier to interface with
  data Move = Move Pos Pos | EnPassant Pos Pos | Castle Pos Pos | NoMove
-  deriving (Read,Eq)
+  deriving (Read,Eq,Show)
 
- instance Show Move where
-   show (Move z z') = "Moving " ++ show z ++ " to " ++ show z'
-   show (Castle z z') = "Castling " ++ show z ++ " to " ++ show z'
-   show (EnPassant z z') = "Funky French move " ++ show z ++ " to " ++ show z'
-   show NoMove = "Move? What Move?"
+ showNice :: Move -> String
+ showNice (Move z z') = "Moving " ++ show z ++ " to " ++ show z'
+ showNice (Castle z z') = "Castling " ++ show z ++ " to " ++ show z'
+ showNice (EnPassant z z') = "Funky French move " ++ show z ++ " to " ++ show z'
+ showNice NoMove = "Move? What Move?"
 
  mapMove :: (Pos -> a) -> Move -> (a,a)
  mapMove f (Move z z') = (f z,f z')

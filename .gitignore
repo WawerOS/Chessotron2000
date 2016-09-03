@@ -1,6 +1,5 @@
-# Products of the build system
-dist
+*.hi
+*.o
+temp/*
 .cabal-sandbox/
-cabal.sandbox.config
-*.save*
-.stack-work/
+.stack-work
