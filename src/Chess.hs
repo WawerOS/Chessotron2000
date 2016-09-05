@@ -131,7 +131,7 @@ Tasks:
       board = Board $ array ((0,0),(7,7)) (assign 0 strBoard)
 
  numToPos :: Int -> Pos
- numToPos j  = (fromIntegral $ i `div` 8,fromIntegral $ i `mod` 8)
+ numToPos j  = (fromIntegral $ i `div` 8,fromIntegral $ j `mod` 8)
   where
     i = 63 - j
 
@@ -377,7 +377,7 @@ Tasks:
 
  sumPieceScore :: Color -> Board -> Double
  sumPieceScore clr brd = sum $ map (pieceVal . getPieceType . getPiece brd) $ filterBoard (\b -> isOurSide clr . getPiece b) brd
- 
+
  -- Convience function for comparing colors and getting coeffiencts
  colorSign :: Num a => Color -> Color -> a
  colorSign c c' | c == c' = 1
