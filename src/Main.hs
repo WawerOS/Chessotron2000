@@ -151,7 +151,7 @@ getColor = do
 
 -- Matches colors to  proper inputs
 colorMatcher :: Color -> [(Move,Board)] -> ([(Move,Board)] -> IO (Move,Board)) -> ([(Move,Board)] -> IO (Move,Board)) -> IO ()
-colorMatcher c hist player1 player2 | c == White = print (snd firstNode) >> playAGame player1 player2 hist
+colorMatcher c hist player1 player2 | c == White = print (snd (head hist)) >> playAGame player1 player2 hist
 colorMatcher c hist player1 player2 | c == Black = playAGame player2 player1 hist
 colorMatcher _ _ _ _ = putStrLn "What have you done!?!" >> exitFailure
 
