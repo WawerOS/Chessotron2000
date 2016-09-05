@@ -4,6 +4,7 @@ import           Control.Monad
 import           Data.Maybe
 import           System.IO
 import           Tree
+import           DataCollect
 import           System.Exit
 
 {-
@@ -55,18 +56,6 @@ flushOut = hFlush stdout
 combine :: (Bool,Bool) -> Bool
 combine (a,a') = a && a'
 
-
-saveSequence :: FilePath  -> [(Move,Board)] -> IO ()
-saveSequence fp sq = writeFile fp (show sq)
-
-readSequence :: FilePath -> IO [(Move,Board)]
-readSequence fp = read <$> readFile fp
-
-beforeChoice = do
-  putStr ">>"
-  flushOut
-  getLine
-
 afterChoice m mv= do
   print mv
   flushOut
@@ -77,9 +66,9 @@ afterChoice m mv= do
 getUserMove :: FilePath -> [(Move,Board)] -> IO (Move,Board)
 
 getUserMove fp [m] = do
-  input <- beforeChoice
+  input <- getInput
   when (input ==  ":q") exitSuccess
-  if input == ":b" || input == ":l"
+  if input == ":b"
     then backOrLoad input fp [m]
     else do
       let mv = maybeOrDefault (maybeRead input) NoMove :: Move
@@ -89,11 +78,10 @@ getUserMove fp [m] = do
 getUserMove fp [m,_] = getUserMove fp [m]
 
 getUserMove fp ls@(m:_:ms) = do
-  input <- beforeChoice
+  input <- getInput
   when (input ==  ":q") exitSuccess
-  when (input == ":s") (saveSequence fp ls)
-
-  if input == ":b" || input == ":l"
+  saveSequence fp ls
+  if input == ":b"
     then backOrLoad input fp ms
     else do
       let mv = maybeOrDefault (maybeRead input) NoMove :: Move
@@ -101,12 +89,6 @@ getUserMove fp ls@(m:_:ms) = do
         else afterChoice m mv
 
 backOrLoad :: String -> FilePath -> [(Move,Board)] -> IO (Move,Board)
-backOrLoad ":l" fp _ = do
-  newSave <- readSequence fp
-  let c = if (mod) (length newSave) 2 == 0 then White else Black
-  putStrLn ("Your Move " ++ show c ++ newLine)
-  print (snd $ head newSave)
-  getUserMove fp newSave
 backOrLoad ":b" fp (b:xs) = print (snd $ head xs) >> getUserMove fp xs
 backOrLoad _ fp [m] = putStrLn "There's Nothing There!!" >> getUserMove fp [m]
 
@@ -161,7 +143,7 @@ getColor :: IO Color
 getColor = do
   putStrLn "So what Color, Black or White?"
   flushOut
-  msg <- getLine
+  msg <- getInput
   let valList = maybeRead msg :: Maybe Color
   if isThere valList
   then return $ maybeOrDefault valList White
@@ -181,37 +163,33 @@ startChoice = do
   flushOut
   putStrLn "2 -> Old Game!!"
   flushOut
-  putStrLn "3 -> Rule of Three"
+  putStrLn "3 -> Read log files!!"
   flushOut
-  putStr ">>"
-  flushOut
-  numString <- getLine
+  numString <- getInput
   let num = maybeRead numString :: Maybe Int
   case num of
     Just 1 -> do
       putStrLn "Cool choose a log file"
       flushOut
-      putStr ">>"
-      flushOut
-      file <- getLine
+      file <- getInput
       clr <- getColor
       colorMatcher clr [firstNode] (getUserMove file) (getAIMove (opposite clr))
 
     Just 2 -> do
       putStrLn "What log file?"
       flushOut
-      putStr ">>"
-      flushOut
-      file <- getLine
+      file <- getInput
       game <- readSequence file
       let clr = if (mod) (length game) 2 == 0 then White else Black
       putStrLn ("Your playing as " ++ show clr)
       colorMatcher clr game (getUserMove file) (getAIMove (opposite clr))
 
     Just 3 -> do
-      putStrLn "Yay tropes!!"
+      putStrLn "What log file?"
       flushOut
-      startChoice
+      file <- getInput
+      game <- readSequence file
+      showGame game
 
     _ -> startChoice
 
