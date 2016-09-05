@@ -17,7 +17,7 @@ cabal-version:       >=1.10
 
 executable chess
   main-is:             Main.hs
-  other-modules:       Chess,Tree
+  other-modules:       Chess,Tree,DataCollect
   -- other-extensions:
   build-depends:       base >=4.9 && <4.10, array >=0.5 && <0.6
   hs-source-dirs:      src
