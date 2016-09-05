@@ -45,7 +45,7 @@ evalInput ":q" _ = exitSuccess
 evalInput "" z = showZip $ forwardNSteps 1 z
 evalInput ":b" z = showZip $ backNSteps 1 z
 evalInput ":f" z = showZip $ forwardNSteps 1 z
-evalInput _ z = putStrLn "Not a command!!" >> getInput >>= (\(x:xs) -> evalInput xs z)
+evalInput _ z = putStrLn "Not a command!!" >> getInput >>= (`evalInput` z)
 
 showZip :: Zipper (Move,Board) -> IO ()
 showZip (Zip [] a []) = print a >> flushOut
