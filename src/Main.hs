@@ -183,7 +183,7 @@ startChoice = do
       let clr = if (mod) (length game) 2 == 0 then White else Black
       let clr' = opposite clr
       putStrLn ("Your playing as " ++ show clr)
-      colorMatcher clr game (getUserMove file) (getAIMove (opposite clr))
+      colorMatcher clr' game (getUserMove file) (getAIMove (opposite clr))
 
     Just 3 -> do
       putStrLn "What log file?"
