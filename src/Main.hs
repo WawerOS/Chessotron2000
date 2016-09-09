@@ -169,7 +169,7 @@ startChoice = do
   let num = maybeRead numString :: Maybe Int
   case num of
     Just 1 -> do
-      putStrLn "Cool choose a log file"
+      putStrLn "Cool, choose a log file"
       flushOut
       file <- getInput
       clr <- getColor
@@ -181,6 +181,7 @@ startChoice = do
       file <- getInput
       game <- readSequence file
       let clr = if (mod) (length game) 2 == 0 then White else Black
+      let clr' = opposite clr
       putStrLn ("Your playing as " ++ show clr)
       colorMatcher clr game (getUserMove file) (getAIMove (opposite clr))
 
