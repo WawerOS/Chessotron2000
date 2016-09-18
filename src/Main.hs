@@ -155,6 +155,15 @@ colorMatcher c hist player1 player2 | c == White = print (snd (head hist)) >> pl
 colorMatcher c hist player1 player2 | c == Black = playAGame player2 player1 hist
 colorMatcher _ _ _ _ = putStrLn "What have you done!?!" >> exitFailure
 
+gameFromFile :: IO ([(Move,Board)],FilePath)
+gameFromFile = do
+  putStrLn "What log file?"
+  flushOut
+  file <- getInput
+  game <- readSequence file
+  return (game,file)
+
+
 startChoice :: IO ()
 startChoice = do
   putStrLn "Choices!!!"
@@ -176,20 +185,14 @@ startChoice = do
       colorMatcher clr [firstNode] (getUserMove file) (getAIMove (opposite clr))
 
     Just 2 -> do
-      putStrLn "What log file?"
-      flushOut
-      file <- getInput
-      game <- readSequence file
+      (game,file) <- gameFromFile
       let clr = if (mod) (length game) 2 == 0 then White else Black
       let clr' = opposite clr
       putStrLn ("Your playing as " ++ show clr)
       colorMatcher clr' game (getUserMove file) (getAIMove (opposite clr))
 
     Just 3 -> do
-      putStrLn "What log file?"
-      flushOut
-      file <- getInput
-      game <- readSequence file
+      (game,_) <- gameFromFile
       showGame game
 
     _ -> startChoice
