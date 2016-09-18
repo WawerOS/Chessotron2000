@@ -12,6 +12,7 @@ module Tree (
   applyNTimes
 ) where
  import Data.Monoid
+ import Test.QuickCheck
 
 {-
   Provides the data structures and funnctions meant to deal with tree's
@@ -70,6 +71,14 @@ module Tree (
     helper i x j (z:zs) | x >= z = helper i x (j+1) zs
     helper _ x j (z:zs) | z > x = helper j z (j+1) zs
     helper _ _ _ _ = 0
+
+ (<==>) :: Eq a => Maybe a -> a -> Bool
+ Nothing <==> _ = False
+ (Just a) <==> a' = a == a'
+
+ prop_findMax :: Ord a => [a] -> Bool
+ prop_findMax [] = True
+ prop_findMax ls = fmap (ls !!) (findMax ls) <==> maximum ls
 
  chooser :: Ord b => (Tree a -> b) -> Tree a -> Maybe Int
  chooser f (Branch _ cly) = findMax $ map f cly
