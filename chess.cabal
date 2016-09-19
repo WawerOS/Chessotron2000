@@ -19,6 +19,6 @@ executable chess
   main-is:             Main.hs
   other-modules:       Chess,Tree,DataCollect
   -- other-extensions:
-  build-depends:       base >=4.9 && <4.10, array >=0.5 && <0.6
+  build-depends:       base >=4.9 && <4.10, array >=0.5 && <0.6, QuickCheck >=2.8 && <3.0
   hs-source-dirs:      src
   default-language:    Haskell2010
