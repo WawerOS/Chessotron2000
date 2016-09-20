@@ -75,9 +75,9 @@ getUserMove fp [m] = do
       if mv == NoMove then putStrLn "I still  need a move" >> getUserMove fp [m]
         else afterChoice m mv
 
-getUserMove fp [m,_] = getUserMove fp [m]
+getUserMove fp ls@[m,_] = saveSequence fp ls >> getUserMove fp [m]
 
-getUserMove fp ls@(m:_:ms) = do
+getUserMove fp ls@(m:ms) = do
   input <- getInput
   when (input ==  ":q") exitSuccess
   saveSequence fp ls
@@ -186,7 +186,7 @@ startChoice = do
 
     Just 2 -> do
       (game,file) <- gameFromFile
-      let clr = if (mod) (length game) 2 == 0 then White else Black
+      let clr = if (mod) (length game) 2 == 1 then White else Black
       let clr' = opposite clr
       putStrLn ("Your playing as " ++ show clr)
       colorMatcher clr' game (getUserMove file) (getAIMove (opposite clr))
