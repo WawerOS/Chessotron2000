@@ -79,6 +79,7 @@ getUserMove fp ls@(m:ms) = do
   input <- getInput
   when (input ==  ":q") exitSuccess
   saveSequence fp ls
+  if input == ":b"
     then print (snd $ head ms) >> getUserMove fp ms
     else do
       let mv = maybeOrDefault (maybeRead input) NoMove :: Move
