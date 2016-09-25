@@ -15,7 +15,7 @@ import           System.Exit
 
 -- generates a full tree of moves
 moveTree :: Color -> (Move,Board) -> Integer -> Tree (Move,Board)
-moveTree clr = applyNTimes id (getAllOurMoves clr . snd,getAllOurMoves clr' . snd) . Leaf
+moveTree clr = applyNTimes id [getAllOurMoves clr . snd,getAllOurMoves clr' . snd] . Leaf
   where
     clr' = opposite clr
 
@@ -69,28 +69,21 @@ getUserMove fp [m] = do
   input <- getInput
   when (input ==  ":q") exitSuccess
   if input == ":b"
-    then backOrLoad input fp [m]
+    then print (snd m) >> getUserMove fp [m]
     else do
       let mv = maybeOrDefault (maybeRead input) NoMove :: Move
       if mv == NoMove then putStrLn "I still  need a move" >> getUserMove fp [m]
         else afterChoice m mv
 
-getUserMove fp ls@[m,_] = saveSequence fp ls >> getUserMove fp [m]
-
 getUserMove fp ls@(m:ms) = do
   input <- getInput
   when (input ==  ":q") exitSuccess
   saveSequence fp ls
-  if input == ":b"
-    then backOrLoad input fp ms
+    then print (snd $ head ms) >> getUserMove fp ms
     else do
       let mv = maybeOrDefault (maybeRead input) NoMove :: Move
       if mv == NoMove then putStrLn "I still  need a move" >> getUserMove fp ls
         else afterChoice m mv
-
-backOrLoad :: String -> FilePath -> [(Move,Board)] -> IO (Move,Board)
-backOrLoad ":b" fp (b:xs) = print (snd $ head xs) >> getUserMove fp xs
-backOrLoad _ fp [m] = putStrLn "There's Nothing There!!" >> getUserMove fp [m]
 
 -- Checks wheather some one has won yet
 winnerCheck :: Board -> IO Bool
