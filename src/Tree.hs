@@ -26,6 +26,20 @@ module Tree (
  data Tree a = Leaf a | Branch a [Tree a]
     deriving Show
 
+ instance Arbitrary a => Arbitrary (Tree a) where
+   arbitrary = sized sizedArbitrary
+
+
+ sizedArbitrary :: Arbitrary a => Int -> Gen(Tree a)
+ sizedArbitrary m = do
+   ls <- vectorOf (m `div` 2) (sizedArbitrary (m `div` 2))
+   chk <- choose (1,2) :: Gen Integer
+   let con = cusMap ls chk
+   val <- arbitrary
+   return (con val)
+
+  where
+     cusMap ls chk = if chk == 1 then (`Branch` ls) else Leaf
  instance Functor Tree where
   fmap f (Branch x y) = Branch (f x) (map (fmap f) y)
   fmap f (Leaf x) = Leaf (f x)
@@ -84,12 +98,12 @@ module Tree (
  chooser f (Branch _ cly) = findMax $ map f cly
  chooser _ _ = Nothing
 
- alphaBeta :: (Ord a,Num a) => a -> a ->  Bool -> Tree a -> a
+ alphaBeta :: Ord a => a -> a ->  Bool -> Tree a -> a
  alphaBeta  _ _ _ (Leaf a) = a
  alphaBeta  a b True (Branch _ ls) = maxLeq a b ls
  alphaBeta  a b False (Branch _ ls) = minLeq a b ls
 
- minLeq :: (Ord a,Num a) => a -> a -> [Tree a] -> a
+ minLeq :: Ord a => a -> a -> [Tree a] -> a
  minLeq _ b [] = b
  minLeq a b _ | a >= b = b
  minLeq a b (x:xs) | val x < b = maxLeq a (val x) xs
@@ -99,7 +113,7 @@ module Tree (
   where
     val = alphaBeta a b True
 
- maxLeq :: (Ord a,Num a) => a -> a -> [Tree a] -> a
+ maxLeq :: Ord a => a -> a -> [Tree a] -> a
  maxLeq a _ [] = a
  maxLeq a b _ | a > b = a
  maxLeq a b (x:xs) | val x >= a = maxLeq (val x) b xs
@@ -114,7 +128,7 @@ module Tree (
  maxa _ (Leaf a) = a
  maxa (f,g) (Branch _ y) = f (map (maxa (g,f)) y)
 
--- Gives index of branch of greatest value
+-- Gives value of branch of greatest value
  maxmin :: Ord a => Tree a -> a
  maxmin (Leaf a) = a
  maxmin t = maxa (maximum,minimum) t
@@ -127,6 +141,6 @@ module Tree (
 
 
 -- swaps two leaf generating functions
- applyNTimes :: (a -> a) -> (a -> [a],a -> [a]) -> Tree a -> Integer -> Tree a
+ applyNTimes :: (a -> a) -> [a -> [a]] -> Tree a -> Integer -> Tree a
  applyNTimes g _ tr n | n == 0 = fmap g tr
- applyNTimes g (f,h) tr n =  applyNTimes g (h,f) (applyAtEnds g f tr) (n-1)
+ applyNTimes g (f:xs) tr n =  applyNTimes g (xs ++ [f]) (applyAtEnds g f tr) (n-1)
