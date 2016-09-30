@@ -136,11 +136,26 @@ module Tree (
 
 -- A selective fmap
  applyAtEnds :: (a -> b) -> (a -> [b]) -> Tree a -> Tree b
+ applyAtEnds g f (Branch a []) = applyAtEnds g f (Leaf a)
  applyAtEnds g f (Branch val subTr) = Branch (g val) (map (applyAtEnds g f) subTr)
  applyAtEnds g f (Leaf val) = Branch (g val) (map Leaf (f val))
+
+ prop_applyAtEnds :: Tree a -> Bool
+ prop_applyAtEnds tr = (depth tr + 1) == depth (applyAtEnds id (replicate 2) tr)
+ prop_applyNTimes :: (Integer,Tree a) -> Bool
+ prop_applyNTimes (i,tr) = (depth tr + i) == depth (applyNTimes id [replicate 2] tr i)
 
 
 -- swaps two leaf generating functions
  applyNTimes :: (a -> a) -> [a -> [a]] -> Tree a -> Integer -> Tree a
  applyNTimes g _ tr n | n == 0 = fmap g tr
  applyNTimes g (f:xs) tr n =  applyNTimes g (xs ++ [f]) (applyAtEnds g f tr) (n-1)
+
+ isBranch :: Tree a -> Bool
+ isBranch (Branch _ _) = True
+ isBranch (Leaf _) = False
+
+ depth :: Tree a -> Integer
+ depth (Branch _ []) = 1
+ depth (Leaf _) = 1
+ depth (Branch _ ts) = 1 + maximum (map depth ts)
