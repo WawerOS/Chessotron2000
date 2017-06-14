@@ -1,5 +1,7 @@
 module Tree (
   Tree(Leaf,Branch),
+  getBottom,
+  depth,
   getVal,
   getSubTree,
   getAllSubTrees,
@@ -18,7 +20,6 @@ module Tree (
   Provides the data structures and funnctions meant to deal with tree's
 
   Tasks:
-  - Completing alphaBeta
   - Extending Tree typeclasses, to traversable
 -}
 
@@ -28,7 +29,6 @@ module Tree (
 
  instance Arbitrary a => Arbitrary (Tree a) where
    arbitrary = sized sizedArbitrary
-
 
  sizedArbitrary :: Arbitrary a => Int -> Gen(Tree a)
  sizedArbitrary m = do
@@ -48,7 +48,7 @@ module Tree (
   foldMap f (Leaf a) = f a
   foldMap f (Branch a br) = f a <> foldMap (foldMap f) br
 
--- A pair of infinite Tree
+-- A pair of infinite Tree's
  zeroTree :: Tree Integer
  zeroTree = Branch 0 [oneTree,zeroTree]
 
@@ -159,3 +159,7 @@ module Tree (
  depth (Branch _ []) = 1
  depth (Leaf _) = 1
  depth (Branch _ ts) = 1 + maximum (map depth ts)
+
+ getBottom :: Tree a -> [a]
+ getBottom (Branch _ tr) = concatMap getBottom tr
+ getBottom (Leaf a) = [a]
