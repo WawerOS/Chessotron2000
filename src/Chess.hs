@@ -18,6 +18,7 @@ mapMove,
 newBoard,
 easyMove,
 strategyVal,
+stupidEval,
 showNice,
 getAllMoves,
 isValidCoord,
@@ -380,6 +381,7 @@ Tasks:
 
  -- Convience function for comparing colors and getting coeffiencts
  colorSign :: Num a => Color -> Color -> a
+ colorSign c c' | elem EmptyColor [c,c'] = 0
  colorSign c c' | c == c' = 1
  colorSign c c' | c /= c' = -1
  colorSign _ _ = 0
@@ -396,6 +398,9 @@ Tasks:
  sameAZero :: Color -> Piece -> Double
  sameAZero clr piece | isOurSide clr piece = 0
  sameAZero _ p = pieceVal (getPieceType p)
+
+ stupidEval :: Color -> Board -> Double
+ stupidEval clr brd = sum $ map (posVal brd clr) (filterBoard (\b -> isOurSide clr . getPiece b) brd)
 
  -- Computes the strategic value of a board
  strategyVal :: Color -> Board -> Double
