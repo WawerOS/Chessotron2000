@@ -15,7 +15,7 @@ import           System.Exit
 
 -- generates a full tree of moves
 moveTree :: Color -> (Move,Board) -> Integer -> Tree (Move,Board)
-moveTree clr = applyNTimes id [getAllOurMoves clr . snd,getAllOurMoves clr' . snd] . Leaf
+moveTree clr = applyNTimes [getAllOurMoves clr . snd,getAllOurMoves clr' . snd] . Leaf
   where
     clr' = opposite clr
 
