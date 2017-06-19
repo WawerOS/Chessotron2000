@@ -23,8 +23,8 @@ module Tree (
   - Extending Tree typeclasses, to traversable
 -}
 
- -- A data structure meant to represent all possible choices from a event
- data Tree a = Leaf a | Branch a [Tree a]
+-- A data structure meant to represent all possible choices from a event
+ data Tree a = Leaf a | Branch [Tree a]
     deriving Show
 
  instance Arbitrary a => Arbitrary (Tree a) where
@@ -34,42 +34,34 @@ module Tree (
  sizedArbitrary m = do
    ls <- vectorOf (m `div` 2) (sizedArbitrary (m `div` 2))
    chk <- choose (1,2) :: Gen Integer
-   let con = cusMap ls chk
    val <- arbitrary
-   return (con val)
+   return (cusMap val ls chk)
 
   where
-     cusMap ls chk = if chk == 1 then (`Branch` ls) else Leaf
+     cusMap val ls chk = if chk == 1 then Branch ls else Leaf val
  instance Functor Tree where
-  fmap f (Branch x y) = Branch (f x) (map (fmap f) y)
+  fmap f (Branch y) = Branch (map (fmap f) y)
   fmap f (Leaf x) = Leaf (f x)
 
  instance Foldable Tree where
   foldMap f (Leaf a) = f a
-  foldMap f (Branch a br) = f a <> foldMap (foldMap f) br
-
--- A pair of infinite Tree's
- zeroTree :: Tree Integer
- zeroTree = Branch 0 [oneTree,zeroTree]
-
- oneTree :: Tree Integer
- oneTree = Branch 1 [oneTree,zeroTree]
+  foldMap f (Branch br) = foldMap (foldMap f) br
 
  getAllSubTrees :: Tree a -> [Tree a]
  getAllSubTrees (Leaf _) = []
- getAllSubTrees (Branch _ trs) = trs
+ getAllSubTrees (Branch trs) = trs
 
  --  Given a path to take retrieves subtree's
  getSubTree :: Tree a -> [Int] -> Maybe (Tree a)
  getSubTree tr [] = Just tr
  getSubTree (Leaf _) xs | not (null xs) = Nothing
- getSubTree (Branch _ subTr) (x:_) | x > length subTr = Nothing
- getSubTree (Branch _ subTr) (x:xs) = getSubTree (subTr !! x) xs
+ getSubTree (Branch subTr) (x:_) | x > length subTr = Nothing
+ getSubTree (Branch subTr) (x:xs) = getSubTree (subTr !! x) xs
 
  -- Given a tree returns top value
- getVal :: Tree a -> a
- getVal (Leaf a) = a
- getVal (Branch a _) = a
+ getVal :: Tree a -> Maybe a
+ getVal (Leaf a) = Just a
+ getVal (Branch _) = Nothing
 
  -- Combines getVal and getSubTree to return a specific value
  getValAt :: Tree a -> [Int] -> Maybe a
@@ -95,13 +87,13 @@ module Tree (
  prop_findMax ls = fmap (ls !!) (findMax ls) <==> maximum ls
 
  chooser :: Ord b => (Tree a -> b) -> Tree a -> Maybe Int
- chooser f (Branch _ cly) = findMax $ map f cly
+ chooser f (Branch cly) = findMax $ map f cly
  chooser _ _ = Nothing
 
  alphaBeta :: Ord a => a -> a ->  Bool -> Tree a -> a
  alphaBeta  _ _ _ (Leaf a) = a
- alphaBeta  a b True (Branch _ ls) = maxLeq a b ls
- alphaBeta  a b False (Branch _ ls) = minLeq a b ls
+ alphaBeta  a b True (Branch ls) = maxLeq a b ls
+ alphaBeta  a b False (Branch ls) = minLeq a b ls
 
  minLeq :: Ord a => a -> a -> [Tree a] -> a
  minLeq _ b [] = b
@@ -126,7 +118,7 @@ module Tree (
  -- Naive minimax implementation
  maxa :: ([a] -> a,[a] -> a) -> Tree a -> a
  maxa _ (Leaf a) = a
- maxa (f,g) (Branch _ y) = f (map (maxa (g,f)) y)
+ maxa (f,g) (Branch y) = f (map (maxa (g,f)) y)
 
 -- Gives value of branch of greatest value
  maxmin :: Ord a => Tree a -> a
@@ -135,31 +127,31 @@ module Tree (
 
 
 -- A selective fmap
- applyAtEnds :: (a -> b) -> (a -> [b]) -> Tree a -> Tree b
- applyAtEnds g f (Branch a []) = applyAtEnds g f (Leaf a)
- applyAtEnds g f (Branch val subTr) = Branch (g val) (map (applyAtEnds g f) subTr)
- applyAtEnds g f (Leaf val) = Branch (g val) (map Leaf (f val))
+ applyAtEnds :: (a -> [b]) -> Tree a -> Tree b
+ applyAtEnds f (Branch []) = Branch []
+ applyAtEnds f (Branch subTr) = Branch (map (applyAtEnds f) subTr)
+ applyAtEnds f (Leaf val) = Branch (map Leaf (f val))
 
  prop_applyAtEnds :: Tree a -> Bool
- prop_applyAtEnds tr = (depth tr + 1) == depth (applyAtEnds id (replicate 2) tr)
+ prop_applyAtEnds tr = (depth tr + 1) == depth (applyAtEnds (replicate 2) tr)
  prop_applyNTimes :: (Integer,Tree a) -> Bool
- prop_applyNTimes (i,tr) = (depth tr + i) == depth (applyNTimes id [replicate 2] tr i)
+ prop_applyNTimes (i,tr) = (depth tr + i) == depth (applyNTimes [replicate 2] tr i)
 
 
 -- swaps two leaf generating functions
- applyNTimes :: (a -> a) -> [a -> [a]] -> Tree a -> Integer -> Tree a
- applyNTimes g _ tr n | n == 0 = fmap g tr
- applyNTimes g (f:xs) tr n =  applyNTimes g (xs ++ [f]) (applyAtEnds g f tr) (n-1)
+ applyNTimes :: [a -> [a]] -> Tree a -> Integer -> Tree a
+ applyNTimes _ tr n | n == 0 = tr
+ applyNTimes (f:xs) tr n =  applyNTimes (xs ++ [f]) (applyAtEnds f tr) (n-1)
 
  isBranch :: Tree a -> Bool
- isBranch (Branch _ _) = True
+ isBranch (Branch _) = True
  isBranch (Leaf _) = False
 
  depth :: Tree a -> Integer
- depth (Branch _ []) = 1
+ depth (Branch []) = 1
  depth (Leaf _) = 1
- depth (Branch _ ts) = 1 + maximum (map depth ts)
+ depth (Branch ts) = 1 + maximum (map depth ts)
 
  getBottom :: Tree a -> [a]
- getBottom (Branch _ tr) = concatMap getBottom tr
+ getBottom (Branch tr) = concatMap getBottom tr
  getBottom (Leaf a) = [a]
