@@ -65,7 +65,7 @@ module Tree (
 
  -- Combines getVal and getSubTree to return a specific value
  getValAt :: Tree a -> [Int] -> Maybe a
- getValAt tr xs = getVal <$> getSubTree tr xs
+ getValAt tr xs = getVal =<< getSubTree tr xs
 
 
  -- Gives the index of the greatest element
