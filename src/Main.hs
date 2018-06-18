@@ -32,9 +32,10 @@ chessAI :: Color ->  [(Move,Board)] -> Maybe (Move,Board)
 chessAI c (b:_) = b'
   where
     a = moveTree c b moveTreeDepth
+    choices = moveTree c b 1
     valTr = fmap (strategyVal c . snd) a
     ind = chooser (alphaBeta (-1/0) (1/0) True) valTr
-    b' = ind >>= (\v -> getValAt a [v])
+    b' = ind >>= (\v -> getValAt choices [v])
 
 -- Converts a tuple of Maybe's to a Maybe tuple
 tupleMaybe :: (Maybe a,Maybe b) -> Maybe (a,b)
@@ -180,7 +181,7 @@ startChoice = do
 
     Just 2 -> do
       (game,file) <- gameFromFile
-      let clr = if (mod) (length game) 2 == 1 then White else Black
+      let clr = if mod (length game) 2 == 1 then White else Black
       let clr' = opposite clr
       putStrLn ("Your playing as " ++ show clr)
       colorMatcher clr game (getUserMove file) (getAIMove (opposite clr))
