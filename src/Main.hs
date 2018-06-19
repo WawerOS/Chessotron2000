@@ -183,7 +183,7 @@ startChoice = do
       (game,file) <- gameFromFile
       let clr = if mod (length game) 2 == 1 then White else Black
       let clr' = opposite clr
-      putStrLn ("Your playing as " ++ show clr)
+      putStrLn ("You're playing as " ++ show clr)
       colorMatcher clr game (getUserMove file) (getAIMove (opposite clr))
 
     Just 3 -> do
