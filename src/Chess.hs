@@ -396,8 +396,8 @@ Tasks:
 
  -- Computes the strategic value of a board
  strategyVal :: Color -> Board -> Double
- strategyVal c b | checkMate c b = -1.5
- strategyVal c b | checkMate (opposite c) b = 1.5
- strategyVal c b = tanh (sumPieceScore c b - sumPieceScore c' b)
+ strategyVal c b | checkMate c b = -1/0
+ strategyVal c b | checkMate (opposite c) b = 1/0
+ strategyVal c b = posPieceScore c b + sumPieceScore c b - sumPieceScore c' b
   where
     c' = opposite c
