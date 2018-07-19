@@ -222,7 +222,7 @@ Tasks:
  getAllMoves b = concatMap (getBoards b) (filterBoard isPiece b)
 
  -- For a particular board and piece gives all possible moves and boards
- getBoards :: Board -> (Integer, Integer) -> [(Move, Board)]
+ getBoards :: Board -> Pos -> [(Move, Board)]
  getBoards b z = map (Move z &&& movePiece b z) (moves b z)
 
  -- Is a piece on our side
@@ -231,7 +231,7 @@ Tasks:
 
  -- Procures all possible moves for a single side
  getAllOurMoves :: Color -> Board -> [(Move,Board)]
- getAllOurMoves c b = filter (\(Move z _) -> isOurSide c z) . fst $ getAllMoves b
+ getAllOurMoves c b = filter ((\(Move z _) -> isOurSide c (getPiece b z)) . fst) $ getAllMoves b
 
  -- Is it a piece?
  isPiece :: Board  -> Pos -> Bool
@@ -358,7 +358,7 @@ Tasks:
  -- Assigns a strategic value to each piece
  pieceVal :: Num a => PieceType -> a
  pieceVal EmptyType = 0
- pieceVal King = 1
+ pieceVal King = 10
  pieceVal  Pawn = 1
  pieceVal  Knight = 3
  pieceVal  Bishop = 4
@@ -370,6 +370,9 @@ Tasks:
 
  sumPieceScore :: Color -> Board -> Double
  sumPieceScore clr brd = sum $ map (pieceVal . getPieceType . getPiece brd) $ filterBoard (\b -> isOurSide clr . getPiece b) brd
+
+ posPieceScore :: Color -> Board -> Double
+ posPieceScore clr brd = sum $ map (posVal brd clr) $ filterBoard isPiece  brd
 
  -- Convience function for comparing colors and getting coeffiencts
  colorSign :: Num a => Color -> Color -> a
@@ -395,7 +398,6 @@ Tasks:
  strategyVal :: Color -> Board -> Double
  strategyVal c b | checkMate c b = -1.5
  strategyVal c b | checkMate (opposite c) b = 1.5
- strategyVal c b | check c b = -1.2
- strategyVal c b = tanh ( sumPieceScore c b - sumPieceScore c' b)
+ strategyVal c b = tanh (sumPieceScore c b - sumPieceScore c' b)
   where
     c' = opposite c
