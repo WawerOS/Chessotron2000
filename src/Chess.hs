@@ -358,11 +358,11 @@ Tasks:
  -- Assigns a strategic value to each piece
  pieceVal :: Num a => PieceType -> a
  pieceVal EmptyType = 0
- pieceVal King = 10
+ pieceVal King = 1
  pieceVal  Pawn = 1
  pieceVal  Knight = 3
- pieceVal  Bishop = 7
- pieceVal  Rook = 4
+ pieceVal  Bishop = 4
+ pieceVal  Rook = 5
  pieceVal Queen = 8
 
  oneSidePieceScore :: Double
