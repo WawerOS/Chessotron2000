@@ -240,7 +240,7 @@ Tasks:
 
  -- Procures all possible moves for a single side
  getAllOurMoves :: Color -> Board -> [(Move,Board)]
- getAllOurMoves c b = filter ((\(Move z _) -> isOurSide c (getPiece b z)) . fst) $ getAllMoves b
+ getAllOurMoves c b = filter (\(Move z _) -> isOurSide c z) . fst $ getAllMoves b
 
  -- Is it a piece?
  isPiece :: Board  -> Pos -> Bool
@@ -322,9 +322,10 @@ Tasks:
   | not (isValidCoord z && isValidCoord z') = False
   | getPiece b z == emptyPiece = False
   | clr == clr' = False
+  | check clr $ makeMove (Move z z) b = False
   | pieceType == Knight = ((dX == 1) && (dY == 2)) || ((dX == 2) && (dY == 1))
   | sameOrNot clr z' blcked = False
-  | pieceType == King = elem 1 [dX,dY] && (oneDir || eq) && not (check clr (movePiece b z z'))
+  | pieceType == King = elem 1 [dX,dY] && (oneDir || eq)
   | pieceType == Queen = oneDir || eq
   | pieceType == Rook = oneDir
   | pieceType == Bishop = eq
@@ -381,7 +382,7 @@ Tasks:
 
  -- Convience function for comparing colors and getting coeffiencts
  colorSign :: Num a => Color -> Color -> a
- colorSign c c' | elem EmptyColor [c,c'] = 0
+ colorSign c c' | EmptyColor `elem` [c,c'] = 0
  colorSign c c' | c == c' = 1
  colorSign c c' | c /= c' = -1
  colorSign _ _ = 0
