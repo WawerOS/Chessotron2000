@@ -13,12 +13,9 @@ Piece(),
 Board(),
 Pos,
 Move(Move,NoMove),
-numToPos,
-mapMove,
 newBoard,
 easyMove,
 strategyVal,
-stupidEval,
 showNice,
 getAllMoves,
 isValidCoord,
@@ -150,12 +147,6 @@ Tasks:
  showNice (Castle z z') = "Castling " ++ show z ++ " to " ++ show z'
  showNice (EnPassant z z') = "Funky French move " ++ show z ++ " to " ++ show z'
  showNice NoMove = "Move? What Move?"
-
- mapMove :: (Pos -> a) -> Move -> (a,a)
- mapMove f (Move z z') = (f z,f z')
- mapMove f (EnPassant z z') = (f z,f z')
- mapMove f (Castle z z') = (f z,f z')
- mapMove f NoMove = (f (0,0),f (0,0))
 
  -- A constant for a empty space on the Chess board
  emptyPiece :: Piece
@@ -399,9 +390,6 @@ Tasks:
  sameAZero :: Color -> Piece -> Double
  sameAZero clr piece | isOurSide clr piece = 0
  sameAZero _ p = pieceVal (getPieceType p)
-
- stupidEval :: Color -> Board -> Double
- stupidEval clr brd = sum $ map (posVal brd clr) (filterBoard (\b -> isOurSide clr . getPiece b) brd)
 
  -- Computes the strategic value of a board
  strategyVal :: Color -> Board -> Double
